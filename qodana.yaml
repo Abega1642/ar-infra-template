@@ -1,0 +1,70 @@
+version: "1.0"
+
+profile:
+  name: qodana.starter
+
+projectJDK: "21"
+linter: jetbrains/qodana-jvm-community:2025.2
+
+include:
+  - name: OptionalGetWithoutIsPresent
+  - name: ClassEscapesDefinedScope
+  - name: LocalVariableHidesMemberVariable
+  - name: ConcatenationWithEmptyString
+  - name: NonConstantFieldWithUpperCaseName
+  - name: LombokGetterMayBeUsed
+  - name: LombokSetterMayBeUsed
+  - name: MethodWithMoreThanThreeNegations
+  - name: MethodWithMultipleLoops
+  - name: MethodWithMultipleReturnPoints
+  - name: MethodWithTooManyParameters
+  - name: OverlyComplexMethod
+  - name: OverlyLongMethod
+  - name: OverlyNestedMethod
+  - name: ExceptionClassNameDoesntEndWithException
+  - name: NonExceptionNameEndsWithException
+  - name: DataFlowIssu
+  - name: ClassNameDiffersFromFileName
+  - name: EmptyClass
+  - name: ThrowablePrintedToSystemOut
+  - name: SimplifiableIfStatement
+  - name: ObjectsEqualsCanBeSimplified
+  - name: SizeReplaceableByIsEmpty
+  - name: ArrayCanBeReplacedWithEnumValues
+  - name: ClassExplicitlyExtendsObject
+  - name: SingleStatementInBlock
+  - name: ConstantExpression
+  - name: RedundantFieldInitialization
+  - name: ContinueOrBreakFromFinallyBlock
+  - name: ErrorNotRethrown
+  - name: NullThrown
+  - name: CheckedExceptionClass
+  - name: ReturnOfNull
+  - name: ExpressionComparedToItself
+  - name: AnonymousInnerClass
+  - name: ClassMayBeInterface
+  - name: CyclomaticComplexityInspection
+  - name: MagicNumber
+  - name: MagicConstant
+  - name: NewObjectEquality
+  - name: MethodOnlyUsedFromInnerClass
+  - name: AssignmentToNull
+  - name: QuestionableName
+  - name: DuplicateThrows
+  - name: UnusedParameters
+  - name: UnusedLibrary
+  - name: SillyAssignment
+  - name: AssignmentToForLoopParameter
+  - name: MarkdownIncorrectTableFormatting
+
+
+exclude:
+  - name: CodeStyleInspection
+  - name: RedundantModifierInspection
+  - name: UnnecessarySemicolonInspection
+  - name: SpellCheckingInspection
+
+failureConditions:
+  severityThresholds:
+    any: 10
+    critical: 4
