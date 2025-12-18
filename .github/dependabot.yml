@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Abega1642"
+    assignees:
+      - "Abega1642"
+    labels:
+      - "dependencies"
+      - "gradle"
+      - "security"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    ignore:
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major" ]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
