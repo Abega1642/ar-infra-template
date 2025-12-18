@@ -69,8 +69,8 @@ dependencies {
 
     testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.icegreen:greenmail:2.0.1'
-    testImplementation 'com.icegreen:greenmail-junit5:2.0.1'
+    testImplementation 'com.icegreen:greenmail:2.1.8'
+    testImplementation 'com.icegreen:greenmail-junit5:2.1.8'
 
 }
 
