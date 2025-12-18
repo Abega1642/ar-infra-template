@@ -70,7 +70,7 @@ public class PostgresConf {
   private static final PostgreSQLContainer<?> POSTGRES =
       new PostgreSQLContainer<>("postgres:17")
           .withReuse(false)
-          .withDatabaseName("unfaked")
+          .withDatabaseName("ar_infra")
           .withUsername(TEST_VALUE)
           .withPassword(TEST_VALUE);
 
