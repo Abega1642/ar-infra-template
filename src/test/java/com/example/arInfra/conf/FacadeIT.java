@@ -81,7 +81,7 @@ public abstract class FacadeIT {
     EMAIL_CONF.configureProperties(registry);
 
     try {
-      var envConfClazz = Class.forName("conf.com.example.arInfra.EnvConf");
+      var envConfClazz = Class.forName("com.example.arInfra.conf.EnvConf");
       var configureMethod =
           envConfClazz.getDeclaredMethod("configureProperties", DynamicPropertyRegistry.class);
       var envConfInstance = envConfClazz.getConstructor().newInstance();
