@@ -1,28 +1,10 @@
-openapi: "3.1.0"
+openapi: 3.1.0
 info:
-  title: Misinformation Backend API
-  description: Check your Video, Image and Text authenticity
-  version: "1.0.0"
-  contact:
-    name: Abegà Razafindratelo
-    email: a.razafindratelo@gmail.com
-    url: https://github.com/Abega1642
-
+  title: Title
+  description: Title
+  version: 1.0.0
 servers:
-  - url: https://preprod-misinformation-by-ai-1.onrender.com
-    description: Preprod server
-  - url: https://misinformation-by-ai.onrender.com
-    description: Prod server
-
-
-tags:
-  - name: Health
-    description: Endpoints to verify system and bucket health (public access)
-  - name: Docs
-    description: API documentation endpoints and redirects
-  - name: Authentication
-    description: Authentication
-
+  - url: 'https'
 
 paths:
   /:
@@ -40,7 +22,6 @@ paths:
               schema:
                 type: string
                 example: /doc
-
 
   /ping:
     get:
@@ -84,6 +65,43 @@ paths:
                   error:
                     type: string
                     example: Uploaded and downloaded content mismatch
+  /health/email:
+    get:
+      operationId: sendHealthEmail
+      tags:
+        - Health
+      summary: Send health check email
+      description: Sends a test email to verify email service functionality
+      security: [ ]
+      parameters:
+        - name: to
+          in: query
+          required: true
+          description: Email address to send the health check email to
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Email sent successfully"
+        "400":
+          description: Invalid email address format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                timestamp: "2025-11-04T10:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Invalid email address format"
+                path: "/health/email"
+                errorCode: "BAD_FORM"
 
   /health/message:
     get:
@@ -183,572 +201,13 @@ paths:
                   number: 0
                   size: 5
 
-  /auth/login:
-    post:
-      operationId: login
-      tags:
-        - Authentication
-      summary: User login
-      description: >
-        Authenticates a user with email and clerkId. Returns user information.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: Login successful - user authenticated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LoginResponse"
-        "400":
-          description: Invalid request format or missing required fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 400
-                error: "Bad Request"
-                message: "Email and password are required"
-                path: "/auth/login"
-                errorCode: "BAD_FORM"
-        "401":
-          $ref: "#/components/responses/AuthenticationFailed"
-        "403":
-          $ref: "#/components/responses/ForbiddenLoginOrClient"
-
-  /api/v1/medias/upload:
-    post:
-      operationId: uploadMedia
-      tags:
-        - Medias
-      summary: Upload a media (video, audio, image)
-      description: >
-        Uploads a media file (video, audio, image) to the storage bucket.
-        **Requires client credentials and Bearer token authentication.**
-      security:
-        - BearerAuth: [ ]
-      parameters:
-        - name: from-userEmail
-          in: query
-          required: true
-          description: Email of the user uploading the media
-          schema:
-            type: string
-            format: email
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Media (video, image, audio) file to upload
-              required:
-                - file
-      responses:
-        "200":
-          description: Media (video, audio, image) uploaded successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Media"
-        "400":
-          description: Invalid request - missing file or invalid email
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 400
-                error: "Bad Request"
-                message: "Media (video, audio, image) file is required and userEmail must be valid"
-                path: "/api/v1/medias/upload"
-                errorCode: "BAD_FORM"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/InvalidClientCredentials"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-
-
-  /api/v1/detections/texts:
-    post:
-      tags:
-        - Detections
-      summary: Analyse a text for detection
-      parameters:
-        - in: query
-          name: from-userEmail
-          required: true
-          schema:
-            type: string
-            format: email
-          description: The email of the user sending the request
-        - in: query
-          name: text-id
-          required: true
-          schema:
-            type: string
-          description: The ID of the text to analyse
-      responses:
-        '200':
-          description: Text analysed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TextDetectionResult'
-        "400":
-          description: Invalid request - missing text id or invalid email
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 400
-                error: "Bad Request"
-                message: "Text id is required and userEmail must be valid"
-                path: "/api/v1/detections/texts"
-                errorCode: "BAD_FORM"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/InvalidClientCredentials"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-
-
-  /api/media/texts/upload:
-    post:
-      operationId: uploadText
-      tags:
-        - Text
-      summary: Upload texts
-      description: >
-        Uploads text to be treated later.
-        **Bearer token authentication.**
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TextRequest"
-      responses:
-        "200":
-          description: Text instance uploaded successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Text"
-        "400":
-          description: Invalid request - missing properties
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 400
-                error: "Bad Request"
-                message: "Video file is required and userEmail must be valid"
-                path: "/api/media/texts/upload"
-                errorCode: "BAD_FORM"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/InvalidClientCredentials"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /users:
-    get:
-      summary: Get all registered users
-      operationId: getAllUsers
-      tags:
-        - User
-      responses:
-        200:
-          description: List of all Users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-
-  /users/sign-up:
-    post:
-      summary: Register a new user
-      operationId: registerUser
-      tags:
-        - User
-      requestBody:
-        description: To create an user, send the email, full_name and clerk id.
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserCreateRequest"
-      responses:
-        200:
-          description: The created User
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-
-  /auth/token:
-    post:
-      summary: Post the token of the user
-      operationId: saveToken
-      tags:
-        - Authentication
-      requestBody:
-        description: Token instance
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TokenRequest"
-      responses:
-        200:
-          description: token instance saved with success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Token"
-
-
 components:
-  responses:
-    Unauthorized:
-      description: Authentication required - missing or invalid bearer token
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 401
-            error: "Unauthorized"
-            message: "Authentication required"
-            path: "/api/endpoint"
-            errorCode: "MISSING_AUTHORIZATION"
-
-    AuthenticationFailed:
-      description: Authentication failed - invalid credentials
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 401
-            error: "Unauthorized"
-            message: "Invalid email or password"
-            path: "/auth/login"
-            errorCode: "AUTHENTICATION_FAILED"
-
-    InvalidRefreshToken:
-      description: Invalid or expired refresh token
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 401
-            error: "Unauthorized"
-            message: "Refresh token is invalid or has expired"
-            path: "/auth/token/refresh-token-pairs"
-            errorCode: "INVALID_TOKEN"
-
-    InvalidClientCredentials:
-      description: Invalid or missing client credentials
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 403
-            error: "Forbidden"
-            message: "Invalid or missing client credentials"
-            path: "/api/endpoint"
-            errorCode: "AUTHORIZATION_DENIED"
-
-    ForbiddenLoginOrClient:
-      description: User account is not activated or invalid client credentials
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          examples:
-            userDeactivated:
-              value:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 403
-                error: "Forbidden"
-                message: "User account is not activated. Please check your email for activation code"
-                path: "/auth/login"
-                errorCode: "USER_DEACTIVATED"
-            invalidClientCredentials:
-              value:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 403
-                error: "Forbidden"
-                message: "Invalid or missing client credentials"
-                path: "/auth/login"
-                errorCode: "AUTHORIZATION_DENIED"
-
-    ForbiddenAdminOrClient:
-      description: Access denied - ADMIN role required, missing API key, or invalid client credentials
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          examples:
-            missingApiKey:
-              value:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 403
-                error: "Forbidden"
-                message: "Valid API key is required for this endpoint"
-                path: "/users"
-                errorCode: "AUTHORIZATION_DENIED"
-            insufficientRole:
-              value:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 403
-                error: "Forbidden"
-                message: "Access denied - ADMIN role required"
-                path: "/users"
-                errorCode: "AUTHORIZATION_DENIED"
-            invalidClientCredentials:
-              value:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 403
-                error: "Forbidden"
-                message: "Invalid or missing client credentials"
-                path: "/users"
-                errorCode: "AUTHORIZATION_DENIED"
-
-    UserNotFound:
-      description: User not found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 404
-            error: "Not Found"
-            message: "User not found"
-            path: "/api/endpoint"
-            errorCode: "ENTITY_NOT_FOUND"
-
-    BadRequestValidation:
-      description: Invalid request data or validation failure
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 400
-            error: "Bad Request"
-            message: "Email format is invalid or password does not meet requirements"
-            path: "/sign-up"
-            errorCode: "CONSTRAINT_VIOLATION_ON_FIELDS"
-
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-          example:
-            timestamp: "2025-11-04T10:30:00Z"
-            status: 500
-            error: "Internal Server Error"
-            message: "An unexpected error occurred"
-            path: "/api/endpoint"
-            errorCode: "INTERNAL_SERVER_ERROR"
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: >
-        Include in Authorization header as: `Bearer <token>`
-
   schemas:
-    SizeType:
-      type: string
-      enum:
-        - BYTES
-        - KB
-        - MB
-        - GB
-        - TB
-        - PB
-        - EB
-
-    AudioCodec:
-      type: string
-      enum:
-        - NONE
-        - AAC
-        - MP3
-        - MP2
-        - AC3
-        - EAC3
-        - DTS
-        - PCM
-        - PCM_S16LE
-        - PCM_S24LE
-        - FLAC
-        - OPUS
-        - VORBIS
-        - WMA
-        - ALAC
-        - AMR_NB
-        - AMR_WB
-        - G711
-        - G722
-        - UNKNOWN
-
-    ContainerFormat:
-      type: string
-      enum:
-        - MP4
-        - MKV
-        - MOV
-        - AVI
-        - FLV
-        - WMV
-        - WEBM
-        - MPEG_TS
-        - MPEG_PS
-        - THREEGP
-        - OGG
-        - M4A
-        - WAV
-        - FLAC
-        - ASF
-        - APE
-        - AIFF
-        - UNKNOWN
-
-    Codec:
-      type: string
-      enum:
-        - H264
-        - H265
-        - MPEG1
-        - MPEG2
-        - MPEG4
-        - VP8
-        - VP9
-        - AV1
-        - THEORA
-        - WMV1
-        - WMV2
-        - WMV3
-        - MJPEG
-        - PRORES
-        - DNXHD
-        - CINEFORM
-        - DV
-        - XVID
-        - DIVX
-        - HEVC
-        - UNKNOWN
-
-    FileType:
-      type: string
-      enum:
-        - VIDEO
-        - IMAGE
-        - AUDIO
-
-    UUID:
-      type: string
-      pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-      format: uuid
-      example: e6b5cc3e-eaaa-4cb3-912c-e059e983bb78
-
-    Date:
-      type: string
-      format: date-time
-      description: 'Date and time in ISO 8601 format (RFC 3339)'
-      example: '2025-12-06T11:23:45Z'
-
-    Email:
-      type: string
-      format: email
-      pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-      example: a.razafindratelo@gmail.com
-      description: User's email address
-
-    FullName:
-      type: string
-      example: Abegà Razafindratelo
-
-    Dummy:
-      type: object
-      required: [ id, description ]
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        description:
-          type: string
-
-    TokenRequest:
-      type: object
-      properties:
-        clerk_id:
-          $ref: "#/components/schemas/UUID"
-        token:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        expiration_date:
-          type: string
-          format: date
-
-    Token:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        owner:
-          $ref: "#/components/schemas/User"
-        token:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        expiration_date:
-          type: string
-          format: date
-
     ErrorResponse:
       type: object
       properties:
         timestamp:
-          $ref: "#/components/schemas/Date"
+          $ref: "#/components/schemas/DateTime"
           description: When the error occurred
         status:
           type: integer
@@ -793,225 +252,22 @@ components:
         - message
         - path
 
-    LoginRequest:
-      type: object
-      required: [ email, clerk_id ]
-      properties:
-        email:
-          $ref: "#/components/schemas/Email"
-        clerk_id:
-          $ref: "#/components/schemas/UUID"
+    DateTime:
+      type: string
+      format: date-time
+      description: 'Date and time in ISO 8601 format (RFC 3339)'
+      example: '2025-12-06T11:23:45Z'
 
-    TextDetectionResult:
+    UUID:
+      type: string
+      pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+      format: uuid
+      example: e6b5cc3e-eaaa-4cb3-912c-e059e983bb78
+    Dummy:
       type: object
-      required:
-        - text
-        - judgment
-        - proofs
-      properties:
-        text:
-          $ref: '#/components/schemas/Text'
-        judgment:
-          type: string
-        detectedAt:
-          type: string
-          format: date-time
-        searchQuery:
-          type: string
-        proofs:
-          type: array
-          items:
-            $ref: '#/components/schemas/Proof'
-
-    User:
-      type: object
-      required:
-        - id
-        - email
-        - fullName
-        - clerkId
-        - role
-        - status
-        - createdAt
+      required: [ id, description ]
       properties:
         id:
           $ref: "#/components/schemas/UUID"
-        email:
-          $ref: "#/components/schemas/Email"
-        fullName:
-          $ref: "#/components/schemas/FullName"
-        clerkId:
-          $ref: "#/components/schemas/UUID"
-        role:
-          $ref: '#/components/schemas/UserRole'
-        status:
-          $ref: '#/components/schemas/UserStatus'
-        updatedAt:
-          $ref: "#/components/schemas/Date"
-        createdAt:
-          $ref: "#/components/schemas/Date"
-
-    UserRole:
-      type: string
-      enum:
-        - ADMIN
-        - USER
-
-    UserStatus:
-      type: string
-      enum:
-        - ACTIVE
-        - INACTIVE
-        - SUSPENDED
-        - DELETED
-
-    Proof:
-      type: object
-      required:
-        - title
-        - url
-        - type
-      properties:
-        title:
+        description:
           type: string
-          description: Title of the proof
-        url:
-          type: string
-          format: uri
-          description: URL of the proof
-        snippet:
-          type: string
-          description: Optional snippet of the proof
-        type:
-          $ref: '#/components/schemas/ProofType'
-
-    ProofType:
-      type: string
-      description: The type of proof
-      enum:
-        - SUPPORTING
-        - REFUTING
-        - NEUTRAL
-
-    UserCreateRequest:
-      type: object
-      required: [ email, full_name, clerk_id ]
-      properties:
-        email:
-          $ref: "#/components/schemas/Email"
-        full_name:
-          $ref: "#/components/schemas/FullName"
-        clerk_id:
-          $ref: "#/components/schemas/UUID"
-
-    LoginResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: Login status message
-        email:
-          $ref: "#/components/schemas/Email"
-        requestTime:
-          $ref: "#/components/schemas/Date"
-        user:
-          $ref: "#/components/schemas/User"
-
-
-    Media:
-      type: object
-      required:
-        - id
-        - fileName
-        - size
-        - sizeType
-        - fileExtension
-        - createdAt
-        - bucketKey
-        - owner
-      properties:
-        id:
-          type: string
-        fileName:
-          type: string
-        size:
-          type: number
-          format: double
-        sizeType:
-          $ref: '#/components/schemas/SizeType'
-        fileExtension:
-          $ref: '#/components/schemas/FileExtension'
-        createdAt:
-          type: string
-          format: date-time
-        bucketKey:
-          type: string
-        owner:
-          $ref: '#/components/schemas/User'
-        fileType:
-          $ref: '#/components/schemas/FileType'
-          description: Derived from fileExtension
-
-
-    FileExtension:
-      type: string
-      description: File extension type
-      enum:
-        # Images
-        - JPG
-        - JPEG
-        - PNG
-        - GIF
-        - WEBP
-        - SVG
-        - BMP
-        - TIFF
-        - ICO
-
-        # Videos
-        - MP4
-        - AVI
-        - MOV
-        - WMV
-        - FLV
-        - MKV
-        - WEBM
-        - MPEG
-        - MPG
-
-        # Audio
-        - MP3
-        - WAV
-        - FLAC
-        - AAC
-        - OGG
-        - WMA
-        - M4A
-        - OPUS
-        - AIFF
-
-
-    TextRequest:
-      type: object
-      properties:
-        email:
-          $ref: "#/components/schemas/Email"
-        text:
-          type: string
-          example: The sun is black
-
-    Text:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        owner:
-          $ref: "#/components/schemas/User"
-        value:
-          type: string
-          example: The sun is black
-        created_at:
-          $ref: "#/components/schemas/Date"
-
-security:
-  - BearerAuth: [ ]
