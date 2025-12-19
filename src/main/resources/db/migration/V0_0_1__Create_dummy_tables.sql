@@ -1,4 +1,5 @@
-CREATE TABLE dummy (
-                       id  VARCHAR PRIMARY KEY ,
-                       description TEXT NOT NULL
+CREATE TABLE dummy
+(
+    id          VARCHAR(40) PRIMARY KEY,
+    description TEXT NOT NULL
 );

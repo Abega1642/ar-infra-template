@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.6'
+    id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -54,11 +54,13 @@ dependencies {
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.21.40'
     runtimeOnly 'org.postgresql:postgresql'
 
-    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
     implementation 'commons-io:commons-io:2.15.1'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+
+    testImplementation 'org.apache.commons:commons-compress:1.26.0'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.security:spring-security-test'
 
