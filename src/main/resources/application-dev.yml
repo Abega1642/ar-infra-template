@@ -1,0 +1,11 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+      file-size-threshold: 5MB
+
+logging:
+  level:
+    com.example: DEBUG
+    org.hibernate.SQL: DEBUG

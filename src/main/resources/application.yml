@@ -1,0 +1,45 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  datasource:
+    hikari:
+      pool-name: HikariPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      register-mbeans: true
+
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    url: /doc/api.yaml
+
