@@ -2,12 +2,22 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.9'
     id 'io.spring.dependency-management' version '1.1.7'
+    id "org.sonarqube" version "7.2.2.6593"
 }
 
 java {
     group = 'com.example.arInfra'
     sourceCompatibility = '21'
     targetCompatibility = '21'
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "Abega1642_ar-infra-template"
+        property "sonar.organization", "abega1642"
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+    }
 }
 
 configurations {
