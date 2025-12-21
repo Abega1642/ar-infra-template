@@ -5,7 +5,7 @@ plugins {
 }
 
 java {
-    group = 'com.example.arInfra'
+    group = 'com.example.arinfra'
     sourceCompatibility = '21'
     targetCompatibility = '21'
 }
