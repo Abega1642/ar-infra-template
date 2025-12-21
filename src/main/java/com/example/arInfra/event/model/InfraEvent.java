@@ -1,5 +1,7 @@
 package com.example.arInfra.event.model;
 
+import static java.time.Duration.ofSeconds;
+
 import com.example.arInfra.InfraGenerated;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.io.Serializable;
@@ -15,9 +17,9 @@ import lombok.Setter;
  * configuration methods. This class provides visibility timeout calculation, retry handling, and
  * polymorphic deserialization support.
  *
- * <p>The {@link JsonTypeInfo} annotation enables polymorphic deserialization by including the
- * concrete class name in the JSON payload, allowing RabbitMQ consumers to correctly reconstruct the
- * original event type.
+ * <p><b>Security Note:</b> This class uses {@code JsonTypeInfo.Id.NAME} instead of {@code
+ * JsonTypeInfo.Id.CLASS} to prevent arbitrary class instantiation attacks. All concrete event types
+ * must be explicitly registered using {@link com.fasterxml.jackson.annotation.JsonSubTypes}.
  *
  * <p><b>Implementation requirements:</b>
  *
@@ -25,13 +27,23 @@ import lombok.Setter;
  *   <li>Implement {@link #maxConsumerDuration()} to specify maximum processing time
  *   <li>Implement {@link #maxConsumerBackoffBetweenRetries()} to define retry delay
  *   <li>Ensure the event class is {@link Serializable} for message queue persistence
+ *   <li>Register concrete event class in {@link com.fasterxml.jackson.annotation.JsonSubTypes}
+ *       allowlist
  * </ul>
+ *
+ * @see <a
+ *     href="https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data">OWASP
+ *     Deserialization</a>
  */
 @InfraGenerated
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "@type",
+    visible = true)
 public abstract class InfraEvent implements Serializable {
 
-  private static final int MAX_HANDLER_INIT_DURATION_IN_SECOND = 90;
+  private static final Duration MAX_HANDLER_INIT_DURATION_IN_SECOND = ofSeconds(90L);
   private static final SecureRandom sRAND = new SecureRandom();
 
   /**
@@ -63,7 +75,7 @@ public abstract class InfraEvent implements Serializable {
    * @return the maximum initialization duration (default: 90 seconds)
    */
   public Duration eventHandlerInitMaxDuration() {
-    return Duration.ofSeconds(MAX_HANDLER_INIT_DURATION_IN_SECOND);
+    return MAX_HANDLER_INIT_DURATION_IN_SECOND;
   }
 
   /**
@@ -100,7 +112,7 @@ public abstract class InfraEvent implements Serializable {
   public final Duration randomVisibilityTimeout() {
     return eventHandlerInitMaxDuration()
         .plus(maxConsumerDuration())
-        .plus(Duration.ofSeconds(sRAND.nextLong(maxConsumerBackoffBetweenRetries().toSeconds())));
+        .plus(ofSeconds(sRAND.nextLong(maxConsumerBackoffBetweenRetries().toSeconds())));
   }
 
   /**

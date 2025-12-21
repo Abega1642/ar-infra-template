@@ -26,12 +26,13 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install semgrep
 
-      - name: Run Semgrep (SARIF)
+      - name: Run Semgrep (SARIF + verbose)
         run: |
           semgrep ci \
             --config=auto \
             --sarif \
-            --output=semgrep.sarif
+            --output=semgrep.sarif \
+            --verbose
 
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v4
