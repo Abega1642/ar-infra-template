@@ -61,7 +61,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 
-    testImplementation 'org.apache.commons:commons-compress:1.26.0'
+    testImplementation 'org.apache.commons:commons-compress:1.28.0'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.security:spring-security-test'
 
