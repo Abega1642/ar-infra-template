@@ -1,11 +1,8 @@
 version: "1.0"
-
 profile:
   name: qodana.starter
-
 projectJDK: "21"
 linter: jetbrains/qodana-jvm-community:2025.2
-
 include:
   - name: OptionalGetWithoutIsPresent
   - name: ClassEscapesDefinedScope
@@ -56,14 +53,11 @@ include:
   - name: SillyAssignment
   - name: AssignmentToForLoopParameter
   - name: MarkdownIncorrectTableFormatting
-
-
 exclude:
   - name: CodeStyleInspection
   - name: RedundantModifierInspection
   - name: UnnecessarySemicolonInspection
   - name: SpellCheckingInspection
-
 failureConditions:
   severityThresholds:
     any: 10

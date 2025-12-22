@@ -5,7 +5,6 @@ info:
   version: 1.0.0
 servers:
   - url: 'https'
-
 paths:
   /:
     get:
@@ -22,7 +21,6 @@ paths:
               schema:
                 type: string
                 example: /doc
-
   /ping:
     get:
       operationId: pong
@@ -37,7 +35,6 @@ paths:
               schema:
                 type: string
                 example: pong
-
   /health/bucket:
     get:
       operationId: healthBucketCheck
@@ -45,8 +42,8 @@ paths:
         - Health
       summary: Check bucket health by uploading, downloading, and presigning a file
       description: >
-        This endpoint uploads a randomly generated text file to the storage bucket, 
-        verifies its content by downloading it, and returns a presigned URL for the file.
+        This endpoint uploads a randomly generated text file to the storage bucket,  verifies its content by downloading it, and returns a presigned URL for the file.
+
       responses:
         200:
           description: Successfully uploaded, verified, and presigned file.
@@ -72,7 +69,7 @@ paths:
         - Health
       summary: Send health check email
       description: Sends a test email to verify email service functionality
-      security: [ ]
+      security: []
       parameters:
         - name: to
           in: query
@@ -102,7 +99,6 @@ paths:
                 message: "Invalid email address format"
                 path: "/health/email"
                 errorCode: "BAD_FORM"
-
   /health/message:
     get:
       operationId: triggerDummyEvents
@@ -110,8 +106,8 @@ paths:
         - Health
       summary: Trigger dummy health check events
       description: >
-        This endpoint triggers one or more dummy events through the event producer 
-        for testing the messaging system (e.g., RabbitMQ or Kafka).
+        This endpoint triggers one or more dummy events through the event producer  for testing the messaging system (e.g., RabbitMQ or Kafka).
+
       parameters:
         - name: nbEvent
           in: query
@@ -152,7 +148,6 @@ paths:
                   error:
                     type: string
                     example: nbEvent must be between 1 and 500
-
   /health/db:
     get:
       summary: Health check for the dummy database
@@ -200,7 +195,6 @@ paths:
                   totalPages: 1
                   number: 0
                   size: 5
-
 components:
   schemas:
     ErrorResponse:
@@ -251,13 +245,11 @@ components:
         - error
         - message
         - path
-
     DateTime:
       type: string
       format: date-time
       description: 'Date and time in ISO 8601 format (RFC 3339)'
       example: '2025-12-06T11:23:45Z'
-
     UUID:
       type: string
       pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
@@ -265,7 +257,7 @@ components:
       example: e6b5cc3e-eaaa-4cb3-912c-e059e983bb78
     Dummy:
       type: object
-      required: [ id, description ]
+      required: [id, description]
       properties:
         id:
           $ref: "#/components/schemas/UUID"

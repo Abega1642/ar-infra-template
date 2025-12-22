@@ -1,5 +1,4 @@
 name: CI - Qodana Linter
-
 on:
   push:
     branches:
@@ -7,21 +6,17 @@ on:
   pull_request:
     branches:
       - '**'
-
 jobs:
   qodana:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       pull-requests: write
       checks: write
       actions: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Qodana Scan
         uses: JetBrains/qodana-action@99ec27a55aaaf5ba2fd7e5816e66231caed7a72a
         env:
@@ -33,22 +28,19 @@ jobs:
           upload-result: false
           args: --save-report,--results-dir,${{ runner.temp }}/qodana
           push-fixes: 'none'
-
       - name: Print Qodana Summary
         if: always()
         run: |
           echo "===== QODANA SUMMARY ====="
           jq '.' ${{ runner.temp }}/qodana/results/summary.json || echo "No summary.json found"
-
       - name: Print Qodana Errors & Issues
         if: always()
         run: |
           echo "===== QODANA ISSUES ====="
           jq '.problems' ${{ runner.temp }}/qodana/results/qodana.json || echo "No problems found"
-
       - name: Print Qodana SARIF issues (compact)
         if: always()
-        run: |
+        run: |-
           echo "===== QODANA SARIF (compact list) ====="
           jq '.runs[].results[] | {ruleId, message: .message.text, file: .locations[0].physicalLocation.artifactLocation.uri, line: .locations[0].physicalLocation.region.startLine}' \
             ${{ runner.temp }}/qodana/qodana.sarif.json \

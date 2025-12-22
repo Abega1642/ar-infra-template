@@ -1,31 +1,25 @@
 name: CI - Tests
-
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "**" ]
-
+    branches: ["**"]
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
           cache: gradle
-
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
-
       - name: Cache Gradle dependencies
         uses: actions/cache@v5
         with:
@@ -35,7 +29,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
       - name: Run tests
         env:
           TESTCONTAINERS_RYUK_DISABLED: "true"
