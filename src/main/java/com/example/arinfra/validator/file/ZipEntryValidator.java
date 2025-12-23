@@ -72,7 +72,7 @@ public class ZipEntryValidator implements Validator<ZipEntry> {
 
     String normalizedPath = normalizePath(entryName);
 
-    validateNotAbsolutePath(entryName, normalizedPath);
+    validateNotAbsolutePath(entryName);
     validateNoPathTraversal(normalizedPath);
     validateNoSymbolicLink(entryName);
   }
@@ -234,17 +234,17 @@ public class ZipEntryValidator implements Validator<ZipEntry> {
         case ".." ->
             throw new SecurityException(
                 format("ZIP entry contains path traversal sequence: %s", forJava(entryName)));
+        default -> {
+          if (!validatedPath.isEmpty()) validatedPath.append("/");
+          validatedPath.append(component);
+        }
       }
-
-      if (!validatedPath.isEmpty()) validatedPath.append("/");
-
-      validatedPath.append(component);
     }
 
     return validatedPath.toString();
   }
 
-  private void validateNotAbsolutePath(String originalPath, String normalizedPath) {
+  private void validateNotAbsolutePath(String originalPath) {
     if (originalPath.startsWith("/"))
       throw new SecurityException(
           format("ZIP entry uses absolute path: %s", forJava(originalPath)));

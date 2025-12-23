@@ -87,7 +87,9 @@ public class FileValidator implements Validator<Path> {
         throw new IllegalArgumentException(
             format(ERROR_NOT_DIRECTORY, forJava(realPath.toString())));
 
-      try (DirectoryStream<Path> ignored = Files.newDirectoryStream(realPath)) {}
+      try (DirectoryStream<Path> ignored = Files.newDirectoryStream(realPath)) {
+        // no action here
+      }
 
     } catch (IOException e) {
       throw new IllegalArgumentException(format(ERROR_IO_VALIDATION, forJava(path.toString())), e);
