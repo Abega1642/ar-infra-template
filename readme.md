@@ -1,10 +1,38 @@
-# ar‑infra‑template
+<p align="center">
+  <img src="ar-infra-logo.png" alt="ar-infra-template logo" width="460"/>
+</p>
 
- **Author**: [*Abegà Razafindratelo*](https://github.com/Abega1642)
- 
- **Repository**: https://github.com/Abega1642/ar-infra-template.git
+<h1 align="center">ar-infra-template</h1>
 
-------
+<p align="center">
+  <strong>Production-ready Spring Boot infrastructure template</strong><br/>
+  Enterprise-grade backend foundation with CI/CD, security, and observability
+</p>
+
+<p align="center">
+  <a href="https://github.com/Abega1642/ar-infra-template/actions/workflows/ci-test.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Abega1642/ar-infra-template/ci-test.yml?label=tests&style=for-the-badge" />
+  </a>
+  <a href="https://github.com/Abega1642/ar-infra-template/actions/workflows/ci-build.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Abega1642/ar-infra-template/ci-build.yml?label=build&style=for-the-badge" />
+  </a>
+  <a href="https://github.com/Abega1642/ar-infra-template/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Abega1642/ar-infra-template?style=for-the-badge" />
+  </a>
+  <img src="https://img.shields.io/badge/java-21-007396?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/spring%20boot-3.6.9-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=spring,docker,gradle,java,postgres,rabbitmq,gmail,bitbucket&theme=light" />
+</p>
+
+<p align="center">
+  <sub>Designed & maintained by <a href="https://github.com/Abega1642">Abegà Razafindratelo</a></sub>
+</p>
+
+---
+
 
 # 1. Introduction
 
@@ -107,7 +135,7 @@ It ensures:
 ## 5.8 Mail layer ([`mail/`](src/main/java/com/example/arinfra/mail))
 
 - [`Email`](src/main/java/com/example/arinfra/mail/Email.java): Simple object capturing sender, recipient, subject, and body.
-- [`Mailer`](src/main/java/com/example/arinfra/Mailer.java): Service that sends emails, integrates with Spring Mail, and is testable using GreenMail.
+- [`Mailer`](src/main/java/com/example/arinfra/mail/Mailer.java): Service that sends emails, integrates with Spring Mail, and is testable using GreenMail.
 
 ## 5.9 Service layer ([`service/`](src/main/java/com/example/arinfra/service))
 
@@ -184,7 +212,7 @@ Workflows in .github/workflows include:
 
 - [`ci-build.yml`](.github/workflows/ci-build.yml): Builds the ***Docker image***.
 - [`ci-test.yml`](.github/workflows/ci-test.yml): Runs unit and integration tests.
-- [`ci-format.yml`](.github/workflows/ci-format.yml): Enforces ***Google Java Format***; the pipeline fails on unformatted code. Locally run ``` ./format.sh``` to allow the [`google-java-format-1.28.0-all-deps.jar`](google-java-format-1.28.0-all-deps.jar) format your code so it can pass this CI.
+- [`ci-format.yml`](.github/workflows/ci-format.yml): Enforces ***Google Java Format***; the pipeline fails on unformatted code. Locally run `./format.sh` to allow the [`google-java-format-1.28.0-all-deps.jar`](google-java-format-1.28.0-all-deps.jar) format your code so it can pass this CI.
 - [`ci-codeql.yml`](.github/workflows/ci-codeql.yml): Performs security analysis using ***CodeQL***.
 - [`ci-qodana.yml`](.github/workflows/ci-qodana.yml): Runs static analysis via JetBrains ***Qodana***.
 - [`ci-semgrep.yml`](.github/workflows/ci-semgrep.yml): Executes ***Semgrep*** rules for security linting.
