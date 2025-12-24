@@ -227,17 +227,12 @@ public class ZipEntryValidator implements Validator<ZipEntry> {
     StringBuilder validatedPath = new StringBuilder();
 
     for (String component : components) {
-      switch (component) {
-        case "", "." -> {
-          continue;
-        }
-        case ".." ->
-            throw new SecurityException(
-                format("ZIP entry contains path traversal sequence: %s", forJava(entryName)));
-        default -> {
-          if (!validatedPath.isEmpty()) validatedPath.append("/");
-          validatedPath.append(component);
-        }
+      if (component.equals("..")) {
+        throw new SecurityException(
+            format("ZIP entry contains path traversal sequence: %s", forJava(entryName)));
+      } else {
+        if (!validatedPath.isEmpty()) validatedPath.append("/");
+        validatedPath.append(component);
       }
     }
 
