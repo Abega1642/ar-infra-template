@@ -1,6 +1,7 @@
 .PHONY: help build test format format-check clean docker-build docker-run docker-stop \
-        deps compile jar install run dev ci-build ci-test ci-format \
-        qodana security-scan verify-image health-check lint test-unit test-integration
+        deps compile jar install run dev ci-build ci-test ci-format ci-qodana ci-semgrep \
+        qodana semgrep verify-image health-check lint test-unit test-integration \
+        install-pipx install-semgrep
 
 GRADLE := ./gradlew
 DOCKER := docker
@@ -8,6 +9,17 @@ IMAGE_NAME := backend-app
 IMAGE_TAG := latest
 CONTAINER_NAME := backend-app-container
 PORT := 8080
+
+UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
+ifeq ($(OS),Windows_NT)
+	DETECTED_OS := Windows
+else ifeq ($(UNAME_S),Linux)
+	DETECTED_OS := Linux
+else ifeq ($(UNAME_S),Darwin)
+	DETECTED_OS := MacOS
+else
+	DETECTED_OS := Unknown
+endif
 
 .DEFAULT_GOAL := help
 
@@ -64,10 +76,64 @@ lint: ## Run linting checks
 	$(GRADLE) check --no-daemon
 
 qodana: ## Run Qodana code analysis
-	@docker run --rm -v $(PWD):/data/project jetbrains/qodana-jvm-community:latest
+	@mkdir -p $(PWD)/qodana-results
+	@docker run --rm \
+		-v $(PWD):/data/project \
+		-v $(PWD)/qodana-results:/data/results \
+		jetbrains/qodana-jvm-community:latest \
+		--save-report --results-dir=/data/results
 
-security-scan: ## Run Semgrep security scanning
-	@command -v semgrep >/dev/null 2>&1 && semgrep --config=auto . || echo "Semgrep not installed"
+install-pipx: ## Install pipx based on OS
+ifeq ($(DETECTED_OS),Linux)
+	@if ! command -v pipx >/dev/null 2>&1; then \
+		echo "Installing pipx on Linux..."; \
+		if command -v apt-get >/dev/null 2>&1; then \
+			sudo apt-get update && sudo apt-get install -y pipx; \
+		elif command -v dnf >/dev/null 2>&1; then \
+			sudo dnf install -y pipx; \
+		elif command -v yum >/dev/null 2>&1; then \
+			sudo yum install -y pipx; \
+		elif command -v pacman >/dev/null 2>&1; then \
+			sudo pacman -S --noconfirm python-pipx; \
+		else \
+			python3 -m pip install --user pipx; \
+			python3 -m pipx ensurepath; \
+		fi; \
+	else \
+		echo "pipx is already installed"; \
+	fi
+else ifeq ($(DETECTED_OS),MacOS)
+	@if ! command -v pipx >/dev/null 2>&1; then \
+		echo "Installing pipx on MacOS..."; \
+		if command -v brew >/dev/null 2>&1; then \
+			brew install pipx; \
+			pipx ensurepath; \
+		else \
+			python3 -m pip install --user pipx; \
+			python3 -m pipx ensurepath; \
+		fi; \
+	else \
+		echo "pipx is already installed"; \
+	fi
+else ifeq ($(DETECTED_OS),Windows)
+	@echo "Installing pipx on Windows..."
+	@python -m pip install --user pipx || python3 -m pip install --user pipx
+	@python -m pipx ensurepath || python3 -m pipx ensurepath
+else
+	@echo "Unknown OS. Please install pipx manually."
+	@exit 1
+endif
+
+install-semgrep: install-pipx ## Install Semgrep using pipx
+	@if ! command -v semgrep >/dev/null 2>&1; then \
+		echo "Installing Semgrep via pipx..."; \
+		pipx install semgrep || (echo "Failed to install Semgrep" && exit 1); \
+	else \
+		echo "Semgrep is already installed"; \
+	fi
+
+semgrep: install-semgrep ## Run Semgrep security scanning
+	@semgrep ci --config=auto --sarif --output=semgrep.sarif --verbose
 
 ##@ Docker
 
@@ -113,6 +179,10 @@ ci-test: test ## Run CI test pipeline locally
 
 ci-format: format-check ## Run CI format check locally
 
+ci-qodana: qodana ## Run CI Qodana pipeline locally
+
+ci-semgrep: semgrep ## Run CI Semgrep pipeline locally
+
 ##@ Cleanup
 
 clean: ## Clean build artifacts
@@ -133,6 +203,7 @@ install: ## Install and verify development tools
 	@chmod +x format.sh yamlfmt 2>/dev/null || true
 
 verify: ## Verify development environment
+	@echo "Detected OS: $(DETECTED_OS)"
 	@java -version
 	@$(GRADLE) --version
 	@docker --version

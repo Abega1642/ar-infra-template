@@ -1,11 +1,10 @@
 name: CI - Semgrep
 on:
   push:
-    branches:
-      - '**'
+    branches: ["**"]
   pull_request:
-    branches:
-      - '**'
+    branches: ["**"]
+  workflow_dispatch:
 jobs:
   semgrep:
     name: Analyze (Semgrep)
@@ -16,17 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-      - name: Install Semgrep
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install semgrep
-      - name: Run Semgrep (SARIF + verbose)
-        run: |
-          semgrep ci \
-            --config=auto \
-            --sarif \
-            --output=semgrep.sarif \
-            --verbose
+      - name: Run Semgrep analysis
+        run: make ci-semgrep
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v4
         with:
