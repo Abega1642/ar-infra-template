@@ -1,0 +1,16 @@
+# Default owner (entire repository)
+* @Abega1642
+
+# CI / Automation
+.github/ @Abega1642
+
+# Security & governance files
+SECURITY.md @Abega1642
+CODE_OF_CONDUCT.md @Abega1642
+CONTRIBUTING.md @Abega1642
+dependabot.yml @Abega1642
+
+# Build & tooling
+gradle/ @Abega1642
+build.gradle @Abega1642
+settings.gradle @Abega1642
