@@ -4,6 +4,7 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,8 +31,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Run tests
-        env:
-          TESTCONTAINERS_RYUK_DISABLED: "true"
-          TESTCONTAINERS_CHECKS_DISABLE: "true"
-          DOCKER_HOST: unix:///var/run/docker.sock
-        run: ./gradlew clean test --info
+        run: make ci-test
