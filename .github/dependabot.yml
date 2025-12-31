@@ -19,9 +19,15 @@ updates:
     commit-message:
       prefix: "deps"
       include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      gradle-dependencies:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -33,3 +39,4 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    rebase-strategy: "auto"
