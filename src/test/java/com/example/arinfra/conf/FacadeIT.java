@@ -80,14 +80,10 @@ public abstract class FacadeIT {
     BUCKET_CONF.configureProperties(registry);
     EMAIL_CONF.configureProperties(registry);
 
-    try {
-      var envConfClazz = Class.forName("com.example.arinfra.conf.EnvConf");
-      var configureMethod =
-          envConfClazz.getDeclaredMethod("configureProperties", DynamicPropertyRegistry.class);
-      var envConfInstance = envConfClazz.getConstructor().newInstance();
-      configureMethod.invoke(envConfInstance, registry);
-    } catch (ClassNotFoundException e) {
-      log.warn("EnvConf not found: skipping project-specific test env variables");
-    }
+    Class<?> envConfClazz = EnvConf.class;
+    var configureMethod =
+        envConfClazz.getDeclaredMethod("configureProperties", DynamicPropertyRegistry.class);
+    var envConfInstance = envConfClazz.getConstructor().newInstance();
+    configureMethod.invoke(envConfInstance, registry);
   }
 }

@@ -2,7 +2,7 @@ package com.example.arinfra.endpoint.rest.controller.health;
 
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.repository.model.Dummy;
-import com.example.arinfra.service.DummyService;
+import com.example.arinfra.service.health.HealthRepositoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 @RequestMapping("/health/db")
 public class HealthRepositoryController {
-  private final DummyService dummyService;
+  private final HealthRepositoryService healthRepositoryService;
 
   /**
    * Checks database health by retrieving paginated dummy data.
@@ -37,6 +37,6 @@ public class HealthRepositoryController {
   public Page<Dummy> checkDbHealth(
       @RequestParam(value = "page", required = false) Integer page,
       @RequestParam(value = "size", required = false) Integer size) {
-    return dummyService.getAll(page, size);
+    return healthRepositoryService.getAll(page, size);
   }
 }
