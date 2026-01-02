@@ -5,10 +5,10 @@ import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.endpoint.rest.controller.model.ErrorResponse;
-import com.example.arinfra.exception.DirectoryUploadException;
 import com.example.arinfra.exception.MissingAuthorizationException;
 import com.example.arinfra.exception.bucket.BucketHealthCheckException;
 import com.example.arinfra.exception.bucket.BucketOperationException;
+import com.example.arinfra.exception.bucket.DirectoryUploadException;
 import com.example.arinfra.exception.health.EmailHealthCheckException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;

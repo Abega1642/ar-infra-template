@@ -1,4 +1,4 @@
-package com.example.arinfra.service;
+package com.example.arinfra.service.health;
 
 import com.example.arinfra.repository.DummyRepository;
 import com.example.arinfra.repository.model.Dummy;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class DummyService {
+public class HealthRepositoryService {
   private final Paginator paginator;
   private final DummyRepository dummyRepository;
 
