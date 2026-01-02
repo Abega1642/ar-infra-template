@@ -1,5 +1,6 @@
 package com.example.arinfra.event.config;
 
+import static com.example.arinfra.file.PackageUtils.getParentPackage;
 import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
@@ -44,7 +45,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InfraEventTypeRegistrar implements PolymorphicTypeRegistrar {
 
-  private static final String EVENT_BASE_PACKAGE = "com.example.arinfra.event";
+  private static final String EVENT_BASE_PACKAGE = getParentPackage(InfraEvent.class);
 
   private final ObjectMapper objectMapper;
 
