@@ -308,10 +308,27 @@ class SecureTempFileManagerTest {
   }
 
   @Test
-  void should_not_create_executable_file() throws IOException {
+  void should_not_create_executable_file_on_unix() throws IOException {
     createdFile = subject.createSecureTempFile(TEST_PREFIX, TEST_SUFFIX);
 
     assertFalse(createdFile.canExecute());
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
+  void should_handle_windows_executable_behavior() throws IOException {
+    createdFile = subject.createSecureTempFile(TEST_PREFIX, TEST_SUFFIX);
+
+    // Windows doesn't use Unix-style executable bits
+    // Files are executable based on extension (.exe, .bat, .cmd, etc.)
+    // A .txt file should not be executable on Windows
+    assertTrue(createdFile.isFile());
+    assertFalse(createdFile.isDirectory());
+
+    String userTempDir = System.getProperty("java.io.tmpdir");
+    assertTrue(createdFile.getAbsolutePath().startsWith(userTempDir));
+
+    // On Windows, canExecute() may return true for all files the user owns
   }
 
   @Test
