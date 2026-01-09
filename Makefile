@@ -17,6 +17,12 @@ else ifeq ($(UNAME_S),Linux)
 	DETECTED_OS := Linux
 else ifeq ($(UNAME_S),Darwin)
 	DETECTED_OS := MacOS
+else ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+	DETECTED_OS := Windows
+else ifeq ($(findstring MSYS,$(UNAME_S)),MSYS)
+	DETECTED_OS := Windows
+else ifeq ($(findstring CYGWIN,$(UNAME_S)),CYGWIN)
+	DETECTED_OS := Windows
 else
 	DETECTED_OS := Unknown
 endif
@@ -64,12 +70,24 @@ test-integration: ## Run integration tests only
 ##@ Code Quality
 
 format: ## Format code (Java and YAML)
-	@chmod +x format.sh
-	@./format.sh
+	@if [ -f "format.sh" ]; then \
+		chmod +x format.sh && ./format.sh; \
+	elif [ -f "format.bat" ]; then \
+		cmd //c format.bat; \
+	else \
+		echo "Error: No format script found (format.sh or format.bat)"; \
+		exit 1; \
+	fi
 
 format-check: ## Verify code formatting
-	@chmod +x format.sh
-	@./format.sh
+	@if [ -f "format.sh" ]; then \
+		chmod +x format.sh && ./format.sh; \
+	elif [ -f "format.bat" ]; then \
+		cmd //c format.bat; \
+	else \
+		echo "Error: No format script found (format.sh or format.bat)"; \
+		exit 1; \
+	fi
 	@git diff --exit-code || (echo "Formatting issues detected. Run 'make format' to fix." && exit 1)
 
 lint: ## Run linting checks
@@ -200,10 +218,12 @@ install: ## Install and verify development tools
 	@test -f google-java-format-1.28.0-all-deps.jar || \
 		curl -L -o google-java-format-1.28.0-all-deps.jar \
 		https://github.com/google/google-java-format/releases/download/v1.28.0/google-java-format-1.28.0-all-deps.jar
-	@chmod +x format.sh yamlfmt 2>/dev/null || true
+	@if [ -f "format.sh" ]; then chmod +x format.sh; fi
+	@if [ -d "yamlfmt" ]; then chmod +x yamlfmt/* 2>/dev/null || true; fi
 
 verify: ## Verify development environment
 	@echo "Detected OS: $(DETECTED_OS)"
+	@echo "Format script: $(FORMAT_SCRIPT)"
 	@java -version
 	@$(GRADLE) --version
 	@docker --version
