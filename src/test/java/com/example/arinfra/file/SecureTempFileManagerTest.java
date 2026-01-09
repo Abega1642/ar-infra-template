@@ -308,6 +308,7 @@ class SecureTempFileManagerTest {
   }
 
   @Test
+  @EnabledOnOs({OS.LINUX, OS.MAC})
   void should_not_create_executable_file_on_unix() throws IOException {
     createdFile = subject.createSecureTempFile(TEST_PREFIX, TEST_SUFFIX);
 
