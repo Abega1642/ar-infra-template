@@ -4,7 +4,7 @@ import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.exception.health.EmailHealthCheckException;
-import com.example.arinfra.file.SecureTempFileManager;
+import com.example.arinfra.file.TempFileManager;
 import com.example.arinfra.mail.Email;
 import com.example.arinfra.mail.Mailer;
 import jakarta.mail.internet.AddressException;
@@ -27,7 +27,7 @@ public class HealthEmailService {
   private static final String TEST_ATTACHMENT_SUFFIX = ".txt";
 
   private final Mailer mailer;
-  private final SecureTempFileManager secureTempFileManager;
+  private final TempFileManager tempFileManager;
 
   /**
    * Sends a comprehensive set of test emails to verify email functionality.
@@ -139,7 +139,7 @@ public class HealthEmailService {
     File attachment = null;
     try {
       attachment =
-          secureTempFileManager.createSecureTempFileWithContent(
+          tempFileManager.createSecureTempFileWithContent(
               TEST_ATTACHMENT_PREFIX, TEST_ATTACHMENT_SUFFIX, attachmentContent);
 
       mailer.accept(
@@ -156,7 +156,7 @@ public class HealthEmailService {
           "with-attachment", "Failed to create or send attachment", e);
     } finally {
       if (attachment != null) {
-        secureTempFileManager.deleteTempFile(attachment);
+        tempFileManager.deleteTempFile(attachment);
       }
     }
   }

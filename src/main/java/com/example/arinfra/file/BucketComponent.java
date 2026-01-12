@@ -38,7 +38,7 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
  *
  * <ul>
  *   <li>All bucket keys are sanitized before logging
- *   <li>Temporary files are created using {@link SecureTempFileManager}
+ *   <li>Temporary files are created using {@link TempFileManager}
  *   <li>Exceptions are domain-specific and controller-advice friendly
  * </ul>
  *
@@ -51,7 +51,7 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 public class BucketComponent {
 
   private final BucketConf bucketConf;
-  private final SecureTempFileManager secureTempFileManager;
+  private final TempFileManager tempFileManager;
 
   /**
    * Uploads a file or directory to the configured bucket.
@@ -116,7 +116,7 @@ public class BucketComponent {
 
     try {
       File destination =
-          secureTempFileManager.createSecureTempFile("b2-", "-" + bucketKey.replace("/", "-"));
+          tempFileManager.createSecureTempFile("b2-", "-" + bucketKey.replace("/", "-"));
 
       var request =
           DownloadFileRequest.builder()

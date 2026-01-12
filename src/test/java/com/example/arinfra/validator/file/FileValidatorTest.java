@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.example.arinfra.InfraGenerated;
 import java.io.IOException;
@@ -71,7 +72,11 @@ class FileValidatorTest {
 
     try {
       Files.createSymbolicLink(symlink, target);
-    } catch (UnsupportedOperationException | SecurityException e) {
+    } catch (UnsupportedOperationException | SecurityException | IOException e) {
+      assumeTrue(
+          false,
+          "Skipping test: Symbolic link creation not supported (Windows requires admin"
+              + " privileges)");
       return;
     }
 
@@ -135,7 +140,11 @@ class FileValidatorTest {
 
     try {
       Files.createSymbolicLink(symlink, target);
-    } catch (UnsupportedOperationException | SecurityException e) {
+    } catch (UnsupportedOperationException | SecurityException | IOException e) {
+      assumeTrue(
+          false,
+          "Skipping test: Symbolic link creation not supported (Windows requires admin"
+              + " privileges)");
       return;
     }
 

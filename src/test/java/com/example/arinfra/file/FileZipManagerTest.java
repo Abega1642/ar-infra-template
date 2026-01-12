@@ -45,7 +45,7 @@ class FileZipManagerTest {
 
   @TempDir Path tempDir;
 
-  @Mock private SecureTempFileManager secureTempFileManager;
+  @Mock private TempFileManager tempFileManager;
 
   @Mock private FilenameSanitizer filenameSanitizer;
 
@@ -58,8 +58,7 @@ class FileZipManagerTest {
   @BeforeEach
   void setUp() {
     fileZipManager =
-        new FileZipManager(
-            secureTempFileManager, filenameSanitizer, fileValidator, zipEntryValidator);
+        new FileZipManager(tempFileManager, filenameSanitizer, fileValidator, zipEntryValidator);
   }
 
   @Test
@@ -68,8 +67,7 @@ class FileZipManagerTest {
     File zipFile = tempDir.resolve(TEST_ZIP_NAME).toFile();
 
     when(filenameSanitizer.apply(TEST_ZIP_NAME)).thenReturn(TEST_ZIP_NAME);
-    when(secureTempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME)))
-        .thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME))).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableFile(any(Path.class));
 
     File result = fileZipManager.zipFile(sourceFile, TEST_ZIP_NAME);
@@ -78,7 +76,7 @@ class FileZipManagerTest {
     assertTrue(result.exists());
     verify(fileValidator).validateReadableFile(sourceFile.toPath());
     verify(filenameSanitizer).apply(TEST_ZIP_NAME);
-    verify(secureTempFileManager).createSecureTempFile(anyString(), eq(TEST_ZIP_NAME));
+    verify(tempFileManager).createSecureTempFile(anyString(), eq(TEST_ZIP_NAME));
 
     verifyZipContainsEntry(result, TEST_FILE_NAME);
   }
@@ -114,8 +112,7 @@ class FileZipManagerTest {
     String nameWithoutExtension = "test";
 
     when(filenameSanitizer.apply(nameWithoutExtension)).thenReturn(nameWithoutExtension);
-    when(secureTempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME)))
-        .thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME))).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableFile(any(Path.class));
 
     File result = fileZipManager.zipFile(sourceFile, nameWithoutExtension);
@@ -130,8 +127,7 @@ class FileZipManagerTest {
     File zipFile = tempDir.resolve(TEST_ZIP_NAME).toFile();
 
     when(filenameSanitizer.apply(anyString())).thenAnswer(i -> i.getArgument(0));
-    when(secureTempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME)))
-        .thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME))).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableDirectory(any(Path.class));
     doNothing().when(zipEntryValidator).validateEntryCount(anyInt());
 
@@ -157,7 +153,7 @@ class FileZipManagerTest {
     File zipFile = tempDir.resolve(TEST_ZIP_NAME).toFile();
 
     when(filenameSanitizer.apply(anyString())).thenAnswer(i -> i.getArgument(0));
-    when(secureTempFileManager.createSecureTempFile(anyString(), anyString())).thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), anyString())).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableDirectory(any(Path.class));
     doNothing().when(zipEntryValidator).validateEntryCount(anyInt());
 
@@ -176,8 +172,7 @@ class FileZipManagerTest {
     File zipFile = tempDir.resolve(TEST_ZIP_NAME).toFile();
 
     when(filenameSanitizer.apply(TEST_ZIP_NAME)).thenReturn(TEST_ZIP_NAME);
-    when(secureTempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME)))
-        .thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), eq(TEST_ZIP_NAME))).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableDirectory(any(Path.class));
 
     File result = fileZipManager.zipDirectory(emptyDir.toFile(), TEST_ZIP_NAME);
@@ -192,18 +187,18 @@ class FileZipManagerTest {
     File zipFile = tempDir.resolve(TEST_ZIP_NAME).toFile();
 
     when(filenameSanitizer.apply(anyString())).thenAnswer(i -> i.getArgument(0));
-    when(secureTempFileManager.createSecureTempFile(anyString(), anyString())).thenReturn(zipFile);
+    when(tempFileManager.createSecureTempFile(anyString(), anyString())).thenReturn(zipFile);
     doNothing().when(fileValidator).validateReadableDirectory(any(Path.class));
     doThrow(new SecurityException("Too many entries"))
         .when(zipEntryValidator)
         .validateEntryCount(anyInt());
-    doNothing().when(secureTempFileManager).deleteTempFile(zipFile);
+    doNothing().when(tempFileManager).deleteTempFile(zipFile);
 
     assertThrows(
         SecurityException.class,
         () -> fileZipManager.zipDirectory(sourceDir.toFile(), TEST_ZIP_NAME));
 
-    verify(secureTempFileManager).deleteTempFile(zipFile);
+    verify(tempFileManager).deleteTempFile(zipFile);
   }
 
   @Test
@@ -309,7 +304,7 @@ class FileZipManagerTest {
     File zipFile = createZipWithFiles();
     Path tempExtractDir = tempDir.resolve("temp-extract");
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString()))
         .thenReturn(tempExtractDir.toFile());
     doNothing().when(fileValidator).validateReadableFile(any(Path.class));
     doNothing().when(fileValidator).validateWritableDirectory(any(Path.class));
@@ -325,7 +320,7 @@ class FileZipManagerTest {
     File result = fileZipManager.unzipToTempDirectory(zipFile);
 
     assertNotNull(result);
-    verify(secureTempFileManager).createSecureTempDirectory(anyString());
+    verify(tempFileManager).createSecureTempDirectory(anyString());
     verify(fileValidator, times(2)).validateReadableFile(any(Path.class));
   }
 
