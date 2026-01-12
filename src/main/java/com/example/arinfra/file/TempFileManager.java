@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Component
 @InfraGenerated
 @RequiredArgsConstructor
-public class SecureTempFileManager {
+public class TempFileManager {
 
   private static final String POSIX_OWNER_ONLY_PERMISSIONS = "rw-------";
   private static final String POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS = "rwx------";

@@ -22,7 +22,7 @@ class MultipartFileConverterTest {
   private static final String TEST_CONTENT = "test file content";
   private static final String VALID_FILENAME = "document.pdf";
   private final TempFileCleaner cleaner = new TempFileCleaner();
-  private final SecureTempFileManager TEMP_FILE_MANAGER = new SecureTempFileManager(cleaner);
+  private final TempFileManager TEMP_FILE_MANAGER = new TempFileManager(cleaner);
   private MultipartFileConverter converter;
 
   @BeforeEach

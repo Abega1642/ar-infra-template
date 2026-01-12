@@ -27,7 +27,7 @@ public class MultipartFileConverter implements Function<MultipartFile, File> {
   private static final String DEFAULT_EXTENSION = "tmp";
   private static final int MAX_EXTENSION_LENGTH = 10;
 
-  private final SecureTempFileManager secureTempFileManager;
+  private final TempFileManager tempFileManager;
 
   /**
    * Converts a MultipartFile to a secure temporary File.
@@ -43,7 +43,7 @@ public class MultipartFileConverter implements Function<MultipartFile, File> {
 
     try {
       String safeSuffix = "." + extractSafeFileExtension(originalFilename);
-      File tempFile = secureTempFileManager.createSecureTempFile(UPLOAD_PREFIX, safeSuffix);
+      File tempFile = tempFileManager.createSecureTempFile(UPLOAD_PREFIX, safeSuffix);
 
       multipartFile.transferTo(tempFile);
 

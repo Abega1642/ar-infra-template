@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 import com.example.arinfra.exception.bucket.BucketDirectoryUploadException;
 import com.example.arinfra.exception.bucket.BucketHealthCheckException;
 import com.example.arinfra.file.BucketComponent;
-import com.example.arinfra.file.SecureTempFileManager;
+import com.example.arinfra.file.TempFileManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -41,12 +41,12 @@ class HealthBucketServiceIT {
   private static final Duration PRESIGN_DURATION = Duration.ofMinutes(2);
   @TempDir File tempDir;
   @Mock private BucketComponent bucketComponent;
-  @Mock private SecureTempFileManager secureTempFileManager;
+  @Mock private TempFileManager tempFileManager;
   private HealthBucketService healthBucketService;
 
   @BeforeEach
   void setUp() {
-    healthBucketService = new HealthBucketService(bucketComponent, secureTempFileManager);
+    healthBucketService = new HealthBucketService(bucketComponent, tempFileManager);
   }
 
   @Test
@@ -58,9 +58,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -74,15 +73,14 @@ class HealthBucketServiceIT {
     verify(bucketComponent, atLeast(2)).upload(any(File.class), anyString());
     verify(bucketComponent).download(anyString());
     verify(bucketComponent).presign(anyString(), eq(PRESIGN_DURATION));
-    verify(secureTempFileManager, atLeast(3))
+    verify(tempFileManager, atLeast(3))
         .createSecureTempFileWithContent(anyString(), anyString(), anyString());
-    verify(secureTempFileManager, atLeast(3)).deleteTempFile(any(File.class));
+    verify(tempFileManager, atLeast(3)).deleteTempFile(any(File.class));
   }
 
   @Test
   void should_throw_exception_when_temp_file_creation_fails() throws IOException {
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenThrow(new IOException("Failed to create temp file"));
 
     RuntimeException exception =
@@ -101,9 +99,8 @@ class HealthBucketServiceIT {
     File finalUploadFile = createTempFile("final-upload.txt");
     File tempDirectory = createTempDirectory();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -125,9 +122,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -135,15 +131,14 @@ class HealthBucketServiceIT {
 
     healthBucketService.performHealthCheck();
 
-    verify(secureTempFileManager, atLeast(3)).deleteTempFile(any(File.class));
+    verify(tempFileManager, atLeast(3)).deleteTempFile(any(File.class));
   }
 
   @Test
   void should_cleanup_files_even_when_upload_fails() throws IOException {
     File uploadFile = createTempFile("upload.txt");
 
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile);
 
     doThrow(BucketDirectoryUploadException.class)
@@ -152,7 +147,7 @@ class HealthBucketServiceIT {
 
     assertThrows(RuntimeException.class, () -> healthBucketService.performHealthCheck());
 
-    verify(secureTempFileManager, atLeastOnce()).deleteTempFile(uploadFile);
+    verify(tempFileManager, atLeastOnce()).deleteTempFile(uploadFile);
   }
 
   @Test
@@ -164,9 +159,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -174,7 +168,7 @@ class HealthBucketServiceIT {
 
     healthBucketService.performHealthCheck();
 
-    verify(secureTempFileManager).deleteTempFile(downloadFile);
+    verify(tempFileManager).deleteTempFile(downloadFile);
   }
 
   @Test
@@ -186,9 +180,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -211,9 +204,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -233,9 +225,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -255,9 +246,8 @@ class HealthBucketServiceIT {
     File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
-    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
-    when(secureTempFileManager.createSecureTempFileWithContent(
-            anyString(), anyString(), anyString()))
+    when(tempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
+    when(tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
 
     when(bucketComponent.download(anyString())).thenReturn(downloadFile);
@@ -265,7 +255,7 @@ class HealthBucketServiceIT {
 
     healthBucketService.performHealthCheck();
 
-    verify(secureTempFileManager, atLeast(3))
+    verify(tempFileManager, atLeast(3))
         .createSecureTempFileWithContent(
             argThat(prefix -> prefix.startsWith("bucket-health-")), eq(".txt"), anyString());
   }

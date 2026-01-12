@@ -6,7 +6,7 @@ import static org.owasp.encoder.Encode.forJava;
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.exception.bucket.BucketHealthCheckException;
 import com.example.arinfra.file.BucketComponent;
-import com.example.arinfra.file.SecureTempFileManager;
+import com.example.arinfra.file.TempFileManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -29,7 +29,7 @@ public class HealthBucketService {
   private static final Duration PRESIGN_DURATION = Duration.ofMinutes(2);
 
   private final BucketComponent bucketComponent;
-  private final SecureTempFileManager secureTempFileManager;
+  private final TempFileManager tempFileManager;
 
   /**
    * Performs a comprehensive health check on bucket operations including file upload, download,
@@ -66,7 +66,7 @@ public class HealthBucketService {
     String content = generateRandomContent();
 
     File fileToUpload =
-        secureTempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
+        tempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
 
     try {
       String fileBucketKey = buildBucketKey(fileId);
@@ -79,10 +79,10 @@ public class HealthBucketService {
         validateFileContent(fileToUpload, downloaded);
         log.debug("File upload and download validation successful");
       } finally {
-        secureTempFileManager.deleteTempFile(downloaded);
+        tempFileManager.deleteTempFile(downloaded);
       }
     } finally {
-      secureTempFileManager.deleteTempFile(fileToUpload);
+      tempFileManager.deleteTempFile(fileToUpload);
     }
   }
 
@@ -94,13 +94,13 @@ public class HealthBucketService {
     String dirId = randomUUID().toString();
     String dirPrefix = DIR_PREFIX + dirId;
 
-    File dir = secureTempFileManager.createSecureTempDirectory(dirPrefix);
+    File dir = tempFileManager.createSecureTempDirectory(dirPrefix);
     File fileInDir = null;
 
     try {
       String content = generateRandomContent();
       fileInDir =
-          secureTempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
+          tempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
 
       File targetFile = new File(dir, fileInDir.getName());
       Files.move(fileInDir.toPath(), targetFile.toPath());
@@ -126,15 +126,14 @@ public class HealthBucketService {
     String fileId = randomUUID().toString();
     String content = generateRandomContent();
 
-    File file =
-        secureTempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
+    File file = tempFileManager.createSecureTempFileWithContent(FILE_PREFIX, FILE_SUFFIX, content);
 
     try {
       String bucketKey = buildBucketKey(fileId);
       bucketComponent.upload(file, bucketKey);
       return bucketKey;
     } finally {
-      secureTempFileManager.deleteTempFile(file);
+      tempFileManager.deleteTempFile(file);
     }
   }
 
@@ -183,7 +182,7 @@ public class HealthBucketService {
    * @param fileInDir the file inside the directory (can be null)
    */
   private void cleanupDirectory(File dir, File fileInDir) {
-    if (fileInDir != null && fileInDir.exists()) secureTempFileManager.deleteTempFile(fileInDir);
+    if (fileInDir != null && fileInDir.exists()) tempFileManager.deleteTempFile(fileInDir);
 
     if (dir != null && dir.exists()) {
       try {

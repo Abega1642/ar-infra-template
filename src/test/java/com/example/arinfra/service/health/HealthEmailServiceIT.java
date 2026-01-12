@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.arinfra.InfraGenerated;
-import com.example.arinfra.file.SecureTempFileManager;
+import com.example.arinfra.file.TempFileManager;
 import com.example.arinfra.mail.Email;
 import com.example.arinfra.mail.Mailer;
 import jakarta.mail.internet.AddressException;
@@ -42,7 +42,7 @@ class HealthEmailServiceIT {
   @TempDir Path tempDir;
 
   @Mock private Mailer mailer;
-  @Mock private SecureTempFileManager secureTempFileManager;
+  @Mock private TempFileManager tempFileManager;
 
   @InjectMocks private HealthEmailService healthEmailService;
 
@@ -58,8 +58,7 @@ class HealthEmailServiceIT {
 
     lenient()
         .when(
-            secureTempFileManager.createSecureTempFileWithContent(
-                anyString(), anyString(), anyString()))
+            tempFileManager.createSecureTempFileWithContent(anyString(), anyString(), anyString()))
         .thenReturn(mockAttachment);
   }
 
@@ -125,7 +124,7 @@ class HealthEmailServiceIT {
     assertEquals(1, email.attachments().size());
     assertTrue(email.attachments().getFirst().getName().startsWith("test-attachment"));
 
-    verify(secureTempFileManager).deleteTempFile(any(File.class));
+    verify(tempFileManager).deleteTempFile(any(File.class));
   }
 
   @Test
@@ -160,8 +159,7 @@ class HealthEmailServiceIT {
   void should_delete_attachment_file_after_sending() throws Exception {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
-    verify(secureTempFileManager)
-        .createSecureTempFileWithContent(anyString(), anyString(), anyString());
-    verify(secureTempFileManager).deleteTempFile(any(File.class));
+    verify(tempFileManager).createSecureTempFileWithContent(anyString(), anyString(), anyString());
+    verify(tempFileManager).deleteTempFile(any(File.class));
   }
 }

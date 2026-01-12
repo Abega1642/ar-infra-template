@@ -27,7 +27,7 @@ import org.junit.jupiter.api.condition.OS;
 
 @Slf4j
 @InfraGenerated
-class SecureTempFileManagerTest {
+class TempFileManagerTest {
 
   private static final String TEST_PREFIX = "test-";
   private static final String TEST_SUFFIX = ".txt";
@@ -41,13 +41,13 @@ class SecureTempFileManagerTest {
   private static final int LARGE_CONTENT_SIZE = 10_000;
 
   private final TempFileCleaner tempFileCleaner = new TempFileCleaner();
-  private SecureTempFileManager subject;
+  private TempFileManager subject;
   private File createdFile;
 
   @BeforeEach
   void setUp() {
 
-    subject = new SecureTempFileManager(tempFileCleaner);
+    subject = new TempFileManager(tempFileCleaner);
     createdFile = null;
   }
 

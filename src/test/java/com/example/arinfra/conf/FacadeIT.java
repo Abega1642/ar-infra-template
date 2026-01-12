@@ -18,10 +18,10 @@ import org.springframework.test.context.DynamicPropertySource;
  * <p>This class starts and manages the lifecycle of the following Testcontainers:
  *
  * <ul>
- *   <li><b>PostgreSQL</b> – persistence layer
- *   <li><b>RabbitMQ</b> – asynchronous messaging
- *   <li><b>S3-compatible bucket</b> – file storage
- *   <li><b>Email service</b> – outbound email testing
+ *   <li><b>PostgreSQL</b> - persistence layer
+ *   <li><b>RabbitMQ</b> - asynchronous messaging
+ *   <li><b>S3-compatible bucket</b> - file storage
+ *   <li><b>Email service</b> - outbound email testing
  * </ul>
  *
  * <p>Additionally, it dynamically injects environment variables and container connection properties

@@ -83,7 +83,7 @@ public class FileZipManager {
   private static final int SYMLINK_UNIX_MODE = 0120000;
   private static final int UNIX_FILE_TYPE_MASK = 0170000;
 
-  private final SecureTempFileManager secureTempFileManager;
+  private final TempFileManager tempFileManager;
   private final FilenameSanitizer filenameSanitizer;
   private final FileValidator fileValidator;
   private final ZipEntryValidator zipEntryValidator;
@@ -105,7 +105,7 @@ public class FileZipManager {
     fileValidator.validateReadableFile(sourcePath);
 
     String sanitizedZipFileName = ensureZipExtension(filenameSanitizer.apply(zipFileName));
-    File zipFile = secureTempFileManager.createSecureTempFile(ZIP_PREFIX, sanitizedZipFileName);
+    File zipFile = tempFileManager.createSecureTempFile(ZIP_PREFIX, sanitizedZipFileName);
 
     try (ZipArchiveOutputStream zos = createZipOutputStream(zipFile.toPath())) {
       addFileToZip(zos, sourcePath, sourcePath.getFileName().toString());
@@ -116,7 +116,7 @@ public class FileZipManager {
           forJava(zipFile.getAbsolutePath()));
       return zipFile;
     } catch (IOException e) {
-      secureTempFileManager.deleteTempFile(zipFile);
+      tempFileManager.deleteTempFile(zipFile);
       log.error("Failed to zip file: {}", forJava(sourcePath.toString()), e);
       throw e;
     }
@@ -139,7 +139,7 @@ public class FileZipManager {
     fileValidator.validateReadableDirectory(sourcePath);
 
     String sanitizedZipFileName = ensureZipExtension(filenameSanitizer.apply(zipFileName));
-    File zipFile = secureTempFileManager.createSecureTempFile(ZIP_PREFIX, sanitizedZipFileName);
+    File zipFile = tempFileManager.createSecureTempFile(ZIP_PREFIX, sanitizedZipFileName);
 
     try (ZipArchiveOutputStream zos = createZipOutputStream(zipFile.toPath())) {
       AtomicLong entryCount = new AtomicLong(0);
@@ -152,7 +152,7 @@ public class FileZipManager {
           forJava(zipFile.getAbsolutePath()));
       return zipFile;
     } catch (IOException | SecurityException e) {
-      secureTempFileManager.deleteTempFile(zipFile);
+      tempFileManager.deleteTempFile(zipFile);
       log.error("Failed to zip directory: {}", forJava(sourcePath.toString()), e);
       throw e;
     }
@@ -211,7 +211,7 @@ public class FileZipManager {
       throws IOException {
 
     fileValidator.validateReadableFile(zipFile.toPath());
-    File tempDir = secureTempFileManager.createSecureTempDirectory(UNZIP_PREFIX);
+    File tempDir = tempFileManager.createSecureTempDirectory(UNZIP_PREFIX);
     return unzip(zipFile, tempDir);
   }
 
