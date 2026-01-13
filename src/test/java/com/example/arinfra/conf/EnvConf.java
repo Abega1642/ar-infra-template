@@ -1,6 +1,7 @@
 package com.example.arinfra.conf;
 
 import com.example.arinfra.InfraGenerated;
+import com.example.arinfra.conf.db.PersistenceConf;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 
@@ -13,10 +14,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
  * flags, external service endpoints, and other application-level settings.
  *
  * <p><b>Purpose:</b> <br>
- * While infrastructure-specific configurations ({@link PostgresConf}, {@link RabbitMQConf}, {@link
- * BucketConf}, {@link EmailConf}) handle container connection properties, {@code EnvConf} manages
- * general application environment variables that would typically reside in a {@code .env} file or
- * {@code application-test.properties}.
+ * While infrastructure-specific configurations ({@link PersistenceConf}, {@link RabbitMQConf},
+ * {@link BucketConf}, {@link EmailConf}) handle container connection properties, {@code EnvConf}
+ * manages general application environment variables that would typically reside in a {@code .env}
+ * file or {@code application-test.properties}.
  *
  * <p><b>Common use cases:</b>
  *
@@ -87,7 +88,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
  *
  * @see FacadeIT
  * @see DynamicPropertyRegistry
- * @see PostgresConf
+ * @see PersistenceConf
  * @see RabbitMQConf
  * @see BucketConf
  * @see EmailConf

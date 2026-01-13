@@ -3,6 +3,8 @@ package com.example.arinfra.conf;
 import static java.lang.Runtime.getRuntime;
 
 import com.example.arinfra.InfraGenerated;
+import com.example.arinfra.conf.db.PersistenceConf;
+import com.example.arinfra.conf.db.PersistenceConfFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,11 +20,15 @@ import org.springframework.test.context.DynamicPropertySource;
  * <p>This class starts and manages the lifecycle of the following Testcontainers:
  *
  * <ul>
- *   <li><b>PostgreSQL</b> - persistence layer
+ *   <li><b>Database</b> - Auto-discovered via classpath scanning
  *   <li><b>RabbitMQ</b> - asynchronous messaging
  *   <li><b>S3-compatible bucket</b> - file storage
  *   <li><b>Email service</b> - outbound email testing
  * </ul>
+ *
+ * <p><b>Database Auto-Discovery:</b><br>
+ * The database implementation is automatically discovered by scanning for classes implementing
+ * {@link PersistenceConf}. No configuration needed - it uses whichever implementation is present.
  *
  * <p>Additionally, it dynamically injects environment variables and container connection properties
  * into the Spring context using {@link DynamicPropertySource}.
@@ -43,14 +49,14 @@ import org.springframework.test.context.DynamicPropertySource;
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class FacadeIT {
 
-  private static final PostgresConf POSTGRES_CONF = new PostgresConf();
+  private static final PersistenceConf DB_CONF = PersistenceConfFactory.create();
   private static final RabbitMQConf RABBITMQ_CONF = new RabbitMQConf();
   private static final BucketConf BUCKET_CONF = new BucketConf();
   private static final EmailConf EMAIL_CONF = new EmailConf();
 
   @BeforeAll
   static void beforeAll() {
-    POSTGRES_CONF.start();
+    DB_CONF.start();
     RABBITMQ_CONF.start();
     BUCKET_CONF.start();
     EMAIL_CONF.start();
@@ -59,7 +65,7 @@ public abstract class FacadeIT {
         .addShutdownHook(
             new Thread(
                 () -> {
-                  POSTGRES_CONF.stop();
+                  DB_CONF.stop();
                   RABBITMQ_CONF.stop();
                   BUCKET_CONF.stop();
                   EMAIL_CONF.stop();
@@ -75,7 +81,7 @@ public abstract class FacadeIT {
   @SneakyThrows
   @DynamicPropertySource
   static void configureProperties(DynamicPropertyRegistry registry) {
-    POSTGRES_CONF.configureProperties(registry);
+    DB_CONF.configureProperties(registry);
     RABBITMQ_CONF.configureProperties(registry);
     BUCKET_CONF.configureProperties(registry);
     EMAIL_CONF.configureProperties(registry);

@@ -34,6 +34,7 @@ dependencies {
 
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.flywaydb:flyway-mysql'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -52,7 +53,9 @@ dependencies {
 
     implementation 'software.amazon.awssdk:s3:2.21.40'
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.21.40'
+
     runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
     implementation 'org.apache.commons:commons-lang3:3.20.0'
     implementation 'commons-io:commons-io:2.21.0'
@@ -67,6 +70,7 @@ dependencies {
 
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:mysql'
     testImplementation 'org.testcontainers:rabbitmq'
     testImplementation 'org.testcontainers:localstack'
 
