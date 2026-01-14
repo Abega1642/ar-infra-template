@@ -1,10 +1,10 @@
 package com.example.arinfra.conf;
 
+import static com.example.arinfra.conf.db.PersistenceConfFactory.create;
 import static java.lang.Runtime.getRuntime;
 
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.conf.db.PersistenceConf;
-import com.example.arinfra.conf.db.PersistenceConfFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,7 +28,7 @@ import org.springframework.test.context.DynamicPropertySource;
  *
  * <p><b>Database Auto-Discovery:</b><br>
  * The database implementation is automatically discovered by scanning for classes implementing
- * {@link PersistenceConf}. No configuration needed - it uses whichever implementation is present.
+ * PersistenceConf. No configuration needed - it uses whichever implementation is present.
  *
  * <p>Additionally, it dynamically injects environment variables and container connection properties
  * into the Spring context using {@link DynamicPropertySource}.
@@ -49,7 +49,7 @@ import org.springframework.test.context.DynamicPropertySource;
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class FacadeIT {
 
-  private static final PersistenceConf DB_CONF = PersistenceConfFactory.create();
+  private static final PersistenceConf DB_CONF = create();
   private static final RabbitMQConf RABBITMQ_CONF = new RabbitMQConf();
   private static final BucketConf BUCKET_CONF = new BucketConf();
   private static final EmailConf EMAIL_CONF = new EmailConf();
