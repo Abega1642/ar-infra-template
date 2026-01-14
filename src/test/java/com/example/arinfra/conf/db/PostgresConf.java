@@ -1,6 +1,7 @@
-package com.example.arinfra.conf;
+package com.example.arinfra.conf.db;
 
 import com.example.arinfra.InfraGenerated;
+import com.example.arinfra.conf.FacadeIT;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -55,7 +56,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @InfraGenerated
 @TestConfiguration
 @SuppressWarnings("resource")
-public class PostgresConf {
+public class PostgresConf implements PersistenceConf {
 
   /**
    * Test credential value used for both username and password. Simplifies test configuration with
@@ -85,6 +86,7 @@ public class PostgresConf {
    * context. Database schema migrations (Flyway/Liquibase) will run automatically after the
    * container starts if configured in the application.
    */
+  @Override
   public void start() {
     if (!POSTGRES.isRunning()) POSTGRES.start();
   }
@@ -99,6 +101,7 @@ public class PostgresConf {
    * <p>The shutdown hook ensures containers are stopped even if tests fail or are interrupted. All
    * test data is lost when the container stops, ensuring test isolation.
    */
+  @Override
   public void stop() {
     if (POSTGRES.isRunning()) POSTGRES.stop();
   }
@@ -128,10 +131,16 @@ public class PostgresConf {
    *
    * @param registry the Spring DynamicPropertyRegistry to add properties to
    */
+  @Override
   public void configureProperties(DynamicPropertyRegistry registry) {
     registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
     registry.add("spring.datasource.username", POSTGRES::getUsername);
     registry.add("spring.datasource.password", POSTGRES::getPassword);
     registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return "postgresql";
   }
 }
