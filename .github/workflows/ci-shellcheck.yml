@@ -1,0 +1,56 @@
+name: CI - ShellCheck
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shellcheck:
+    name: ShellCheck Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Make shellcheck executable
+        run: chmod +x ./shellcheck
+      - name: Find all shell scripts
+        id: find-scripts
+        run: |
+          echo "Found shell scripts:"
+          find . -type f -name "*.sh" -not -path "./.git/*" | tee scripts.txt
+      - name: Run ShellCheck on all .sh files
+        run: |
+          set -e
+          exit_code=0
+
+          echo "=== Running ShellCheck on all shell scripts ==="
+
+          while IFS= read -r script; do
+            echo ""
+            echo "Checking: $script"
+            if ./shellcheck "$script"; then
+              echo "$script passed"
+            else
+              echo "$script failed"
+              exit_code=1
+            fi
+          done < scripts.txt
+
+          echo ""
+          if [ $exit_code -eq 0 ]; then
+            echo "=== All shell scripts passed ShellCheck ==="
+          else
+            echo "=== Some shell scripts failed ShellCheck ==="
+          fi
+
+          exit $exit_code
+      - name: ShellCheck summary
+        if: always()
+        run: |-
+          script_count=$(wc -l < scripts.txt)
+          echo "Total shell scripts checked: $script_count"

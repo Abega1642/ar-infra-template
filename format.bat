@@ -1,13 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Formats Java and YAML files using Google Java Format and yamlfmt
+REM Formats Java, YAML, and Shell files using Google Java Format, yamlfmt, and shfmt
 REM Windows-native batch script
 
 REM Security: Ensure we're in the project directory
 cd /d "%~dp0" || exit /b 1
 
 set "YAMLFMT_DIR=yamllint"
+set "SHFMT_DIR=shfmt"
 set "JAVA_FORMATTER=google-java-format-1.28.0-all-deps.jar"
 set "JAVA_SOURCE_DIR=src"
 set "EXIT_CODE=0"
@@ -60,10 +61,28 @@ goto :main
     )
     exit /b 0
 
+:detect_shfmt_binary
+    set "ARCH=%PROCESSOR_ARCHITECTURE%"
+
+    if /i "%ARCH%"=="AMD64" (
+        set "SHFMT_BINARY=shfmt_v3.12.0_windows_amd64.exe"
+    ) else if /i "%ARCH%"=="X86" (
+        set "SHFMT_BINARY=shfmt_v3.12.0_windows_386.exe"
+    ) else (
+        call :log_error "Unsupported Windows architecture for shfmt: %ARCH%"
+        set "SHFMT_BINARY=unsupported"
+    )
+    exit /b 0
+
 :validate_environment
     if not exist "%YAMLFMT_DIR%" (
         call :log_error "yamlfmt directory not found: %YAMLFMT_DIR%"
         exit /b 1
+    )
+
+    if not exist "%SHFMT_DIR%" (
+        call :log_warning "shfmt directory not found: %SHFMT_DIR%"
+        call :log_warning "Skipping shell script formatting"
     )
 
     if not exist "%JAVA_FORMATTER%" (
@@ -186,6 +205,45 @@ goto :main
     call :log_success "YAML files formatted successfully"
     exit /b 0
 
+:format_shell
+    set "SHFMT_PATH=%SHFMT_DIR%\%SHFMT_BINARY%"
+
+    call :log_info "Formatting shell script files..."
+
+    if not exist "%SHFMT_PATH%" (
+        call :log_error "shfmt binary not found: %SHFMT_PATH%"
+        call :log_info "Available binaries in %SHFMT_DIR%:"
+        dir /b "%SHFMT_DIR%\shfmt_*" 2>nul || call :log_info "  None found"
+        exit /b 1
+    )
+
+    REM Count shell script files
+    set "SHELL_FILE_COUNT=0"
+    for /r %%f in (*.sh *.bash) do (
+        set "FILEPATH=%%f"
+        echo !FILEPATH! | findstr /i /c:".git" >nul
+        if errorlevel 1 (
+            set /a SHELL_FILE_COUNT+=1
+        )
+    )
+
+    if %SHELL_FILE_COUNT% equ 0 (
+        call :log_warning "No shell script files found"
+        exit /b 0
+    )
+
+    call :log_info "Found %SHELL_FILE_COUNT% shell script file(s)"
+
+    REM Format shell scripts using shfmt -l -w .
+    "%SHFMT_PATH%" -l -w . 2>&1
+    if errorlevel 1 (
+        call :log_error "Shell script formatting failed"
+        exit /b 1
+    )
+
+    call :log_success "Shell script files formatted successfully"
+    exit /b 0
+
 :main
     call :log_info "Starting code formatting for the current project"
 
@@ -201,28 +259,40 @@ goto :main
     )
 
     call :detect_yamlfmt_binary
+    call :detect_shfmt_binary
 
     if "%YAMLFMT_BINARY%"=="unsupported" (
         call :log_warning "Platform not supported for yamlfmt"
         call :log_warning "Architecture: %PROCESSOR_ARCHITECTURE%"
-        call :log_warning "Skipping YAML formatting, but continuing with Java formatting"
-
-        if %VALIDATE_RESULT% neq 2 (
-            call :format_java
-            if errorlevel 1 exit /b 1
-        )
-        exit /b 0
+        call :log_warning "Skipping YAML formatting"
+    ) else (
+        call :log_info "Using yamlfmt binary: %YAMLFMT_BINARY%"
     )
 
-    call :log_info "Using yamlfmt binary: %YAMLFMT_BINARY%"
+    if "%SHFMT_BINARY%"=="unsupported" (
+        call :log_warning "Platform not supported for shfmt"
+        call :log_warning "Architecture: %PROCESSOR_ARCHITECTURE%"
+        call :log_warning "Skipping shell script formatting"
+    ) else (
+        call :log_info "Using shfmt binary: %SHFMT_BINARY%"
+    )
 
     if %VALIDATE_RESULT% neq 2 (
         call :format_java
         if errorlevel 1 exit /b 1
     )
 
-    call :format_yaml
-    if errorlevel 1 exit /b 1
+    if not "%YAMLFMT_BINARY%"=="unsupported" (
+        call :format_yaml
+        if errorlevel 1 exit /b 1
+    )
+
+    if not "%SHFMT_BINARY%"=="unsupported" (
+        if exist "%SHFMT_DIR%" (
+            call :format_shell
+            if errorlevel 1 exit /b 1
+        )
+    )
 
     echo.
     call :log_success "All formatting completed successfully"
