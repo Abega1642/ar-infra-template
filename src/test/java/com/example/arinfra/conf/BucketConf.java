@@ -149,14 +149,14 @@ public class BucketConf {
    * <p><b>Properties configured:</b>
    *
    * <ul>
-   *   <li>{@code b2.key.id} - LocalStack access key
-   *   <li>{@code b2.application.key} - LocalStack secret key
-   *   <li>{@code b2.bucket.name} - Test bucket name ("test-bucket")
-   *   <li>{@code b2.region} - LocalStack region (typically "us-east-1")
-   *   <li>{@code b2.endpoint.prefix} - Full LocalStack S3 endpoint URL
-   *   <li>{@code b2.endpoint.suffix} - Empty (prefix contains full URL for LocalStack)
-   *   <li>{@code b2.upload.part-size-mb} - Multipart upload part size (5 MB)
-   *   <li>{@code b2.upload.target-throughput-gbps} - Target upload throughput (10 Gbps)
+   *   <li>{@code cloud.storage.key.id} - LocalStack access key
+   *   <li>{@code cloud.storage.application.key} - LocalStack secret key
+   *   <li>{@code cloud.storage.bucket.name} - Test bucket name ("test-bucket")
+   *   <li>{@code cloud.storage.region} - LocalStack region (typically "us-east-1")
+   *   <li>{@code cloud.storage.endpoint.prefix} - Full LocalStack S3 endpoint URL
+   *   <li>{@code cloud.storage.endpoint.suffix} - Empty (prefix contains full URL for LocalStack)
+   *   <li>{@code cloud.storage.upload.part-size-mb} - Multipart upload part size (5 MB)
+   *   <li>{@code cloud.storage.upload.target-throughput-gbps} - Target upload throughput (10 Gbps)
    * </ul>
    *
    * <p>These properties are automatically injected into the Spring test context, allowing the
@@ -167,16 +167,15 @@ public class BucketConf {
    */
   @SneakyThrows
   public void configureProperties(DynamicPropertyRegistry registry) {
-    registry.add("b2.key.id", LOCALSTACK::getAccessKey);
-    registry.add("b2.application.key", LOCALSTACK::getSecretKey);
-    registry.add("b2.bucket.name", () -> TEST_BUCKET);
-    registry.add("b2.region", LOCALSTACK::getRegion);
+    registry.add("cloud.storage.key.id", LOCALSTACK::getAccessKey);
+    registry.add("cloud.storage.application.key", LOCALSTACK::getSecretKey);
+    registry.add("cloud.storage.bucket.name", () -> TEST_BUCKET);
+    registry.add("cloud.storage.region", LOCALSTACK::getRegion);
 
     registry.add(
-        "b2.endpoint.prefix",
+        "cloud.storage.full-endpoint",
         () -> LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString());
-    registry.add("b2.endpoint.suffix", () -> "");
-    registry.add("b2.upload.part-size-mb", () -> 5);
-    registry.add("b2.upload.target-throughput-gbps", () -> 10.0);
+    registry.add("cloud.storage.upload.part-size-mb", () -> 5);
+    registry.add("cloud.storage.upload.target-throughput-gbps", () -> 10.0);
   }
 }

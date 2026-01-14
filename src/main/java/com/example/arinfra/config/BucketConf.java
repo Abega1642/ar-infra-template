@@ -25,20 +25,12 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
  * <p><b>Required application properties:</b>
  *
  * <ul>
- *   <li>{@code b2.key.id} - Application key ID for authentication
- *   <li>{@code b2.application.key} - Application key secret for authentication
- *   <li>{@code b2.bucket.name} - Target bucket name
- *   <li>{@code b2.region} - Storage region (e.g., "us-west-001")
- *   <li>{@code b2.endpoint.prefix} - Endpoint URL prefix (e.g., "<a href="">https://s3</a>.")
- *   <li>{@code b2.endpoint.suffix} - Endpoint URL suffix (e.g., ".backblazeb2.com")
- * </ul>
- *
- * <p><b>Endpoint construction:</b>
- *
- * <ul>
- *   <li>Production: {@code prefix + region + suffix} (e.g.,
- *       "https://s3.us-west-001.backblazeb2.com")
- *   <li>Local development: Uses prefix only if it contains "localhost" or "127.0.0.1"
+ *   <li>{@code cloud.storage.key.id} - Application key ID for authentication
+ *   <li>{@code cloud.storage.application.key} - Application key secret for authentication
+ *   <li>{@code cloud.storage.bucket.name} - Target bucket name
+ *   <li>{@code cloud.storage.region} - Storage region (e.g., "us-west-006")
+ *   <li>{@code cloud.storage.full-endpoint} - Endpoint URL prefix (e.g., "<a
+ *       href="">https://s3.us-west-006.backblaze.com</a>.")
  * </ul>
  *
  * <p>The configuration automatically cleans up resources on application shutdown via the {@link
@@ -70,30 +62,21 @@ public class BucketConf {
    * both an async transfer manager for file operations and a presigner for generating temporary
    * access URLs.
    *
-   * <p><b>Endpoint resolution:</b> If the endpoint prefix contains "localhost" or "127.0.0.1" (for
-   * local testing), uses the prefix as-is. Otherwise, constructs the full endpoint by concatenating
-   * prefix + region + suffix.
-   *
    * @param keyId the application key ID for B2 authentication
    * @param applicationKey the application key secret for B2 authentication
    * @param bucketName the target bucket name
    * @param regionString the storage region identifier
-   * @param endpointPrefix the endpoint URL prefix (e.g., "<a href="">https://s3</a>.")
-   * @param endpointSuffix the endpoint URL suffix (e.g., ".backblazeb2.com")
+   * @param fullEndpoint the endpoint URL (e.g., ""<a
+   *     href="">https://s3.us-west-006.backblaze.com</a>.")
    */
   @SneakyThrows
   public BucketConf(
-      @Value("${b2.key.id}") String keyId,
-      @Value("${b2.application.key}") String applicationKey,
-      @Value("${b2.bucket.name}") String bucketName,
-      @Value("${b2.region}") String regionString,
-      @Value("${b2.endpoint.prefix}") String endpointPrefix,
-      @Value("${b2.endpoint.suffix}") String endpointSuffix) {
+      @Value("${cloud.storage.key.id}") String keyId,
+      @Value("${cloud.storage.application.key}") String applicationKey,
+      @Value("${cloud.storage.bucket.name}") String bucketName,
+      @Value("${cloud.storage.region}") String regionString,
+      @Value("${cloud.storage.full-endpoint}") String fullEndpoint) {
     this.bucketName = bucketName;
-    String fullEndpoint =
-        (endpointPrefix.contains("localhost") || endpointPrefix.contains("127.0.0.1"))
-            ? endpointPrefix
-            : endpointPrefix + regionString + endpointSuffix;
     URI endpoint = URI.create(fullEndpoint);
 
     Region region = Region.of(regionString);
