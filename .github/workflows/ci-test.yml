@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: unit-test-results-${{ matrix.os }}-java${{ matrix.java-version }}
           path: |
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload integration test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: integration-test-results
           path: |
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload full test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: full-test-results
           path: |
