@@ -4,6 +4,7 @@ import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
 import com.example.arinfra.config.BucketConf;
+import com.example.arinfra.exception.bucket.BucketDeleteException;
 import com.example.arinfra.exception.bucket.BucketDirectoryUploadException;
 import com.example.arinfra.exception.bucket.BucketDownloadException;
 import com.example.arinfra.exception.bucket.BucketUploadException;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
@@ -149,6 +151,20 @@ public class BucketComponent {
                 .signatureDuration(expiration)
                 .build())
         .url();
+  }
+
+  public void delete(String bucketKey) {
+    log.info("Deleting file from bucket: key={}", forJava(bucketKey));
+
+    try {
+      var request =
+          DeleteObjectRequest.builder().bucket(bucketConf.getBucketName()).key(bucketKey).build();
+
+      bucketConf.getS3Client().deleteObject(request);
+      log.debug("Successfully deleted object: key={}", forJava(bucketKey));
+    } catch (Exception e) {
+      throw new BucketDeleteException("Delete failed for key: " + forJava(bucketKey), e);
+    }
   }
 
   private GetObjectRequest buildGetObjectRequest(String bucketKey) {

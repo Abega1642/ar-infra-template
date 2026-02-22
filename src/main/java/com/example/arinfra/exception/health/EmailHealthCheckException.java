@@ -9,7 +9,7 @@ import lombok.Getter;
  * about which specific test case failed.
  */
 @Getter
-public class EmailHealthCheckException extends Exception {
+public class EmailHealthCheckException extends RuntimeException {
 
   private final String testCaseName;
 

@@ -1,8 +1,11 @@
 package com.example.arinfra.config;
 
+import static java.time.Duration.ofSeconds;
+
 import com.example.arinfra.InfraGenerated;
 import jakarta.annotation.PreDestroy;
 import java.net.URI;
+import java.time.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +13,11 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
@@ -40,6 +46,9 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 @Configuration
 public class BucketConf {
 
+  private static final Duration API_CALL_TIMEOUT = ofSeconds(5L);
+  private static final Duration API_CALL_ATTEMPT_TIMEOUT = ofSeconds(5L);
+
   /** The name of the configured S3-compatible bucket. */
   @Getter private final String bucketName;
 
@@ -54,6 +63,8 @@ public class BucketConf {
    * files directly without proxy authentication.
    */
   @Getter private final S3Presigner s3Presigner;
+
+  @Getter private final S3Client s3Client;
 
   /**
    * Constructs and configures the S3-compatible storage clients.
@@ -81,14 +92,37 @@ public class BucketConf {
 
     Region region = Region.of(regionString);
 
-    AwsCredentialsProvider credentialsProvider =
+    final AwsCredentialsProvider credentialsProvider =
         StaticCredentialsProvider.create(AwsBasicCredentials.create(keyId, applicationKey));
 
-    S3AsyncClient s3AsyncClient =
+    final S3Configuration s3Configuration =
+        S3Configuration.builder()
+            .checksumValidationEnabled(false)
+            .pathStyleAccessEnabled(true)
+            .build();
+
+    final ClientOverrideConfiguration overrideConfiguration =
+        ClientOverrideConfiguration.builder()
+            .apiCallTimeout(API_CALL_TIMEOUT)
+            .apiCallAttemptTimeout(API_CALL_ATTEMPT_TIMEOUT)
+            .build();
+
+    this.s3Client =
+        S3Client.builder()
+            .endpointOverride(endpoint)
+            .region(region)
+            .credentialsProvider(credentialsProvider)
+            .serviceConfiguration(s3Configuration)
+            .overrideConfiguration(overrideConfiguration)
+            .build();
+
+    final S3AsyncClient s3AsyncClient =
         S3AsyncClient.builder()
             .endpointOverride(endpoint)
             .region(region)
             .credentialsProvider(credentialsProvider)
+            .serviceConfiguration(s3Configuration)
+            .overrideConfiguration(overrideConfiguration)
             .build();
 
     this.s3TransferManager = S3TransferManager.builder().s3Client(s3AsyncClient).build();
@@ -98,6 +132,7 @@ public class BucketConf {
             .endpointOverride(endpoint)
             .region(region)
             .credentialsProvider(credentialsProvider)
+            .serviceConfiguration(s3Configuration)
             .build();
   }
 
@@ -115,5 +150,7 @@ public class BucketConf {
     if (s3TransferManager != null) s3TransferManager.close();
 
     if (s3Presigner != null) s3Presigner.close();
+
+    if (s3Client != null) s3Client.close();
   }
 }
