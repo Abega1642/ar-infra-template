@@ -1,5 +1,6 @@
 package com.example.arinfra.config;
 
+import static com.example.arinfra.file.PackageUtils.getGrandparentPackage;
 import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
@@ -73,7 +74,8 @@ import org.springframework.context.annotation.Primary;
 @InfraGenerated
 public class JacksonConfiguration {
 
-  private static final String APPLICATION_BASE_PACKAGE = "com.example";
+  private static final String APPLICATION_BASE_PACKAGE =
+      getGrandparentPackage(JacksonConfiguration.class);
 
   /**
    * Creates the primary ObjectMapper bean with security hardening and feature configuration.
