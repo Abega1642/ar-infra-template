@@ -37,7 +37,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @InfraGenerated
 @Configuration
-public class RabbitConfig {
+public class RabbitConf {
 
   @Value("${spring.rabbitmq.queue}")
   private String queueName;

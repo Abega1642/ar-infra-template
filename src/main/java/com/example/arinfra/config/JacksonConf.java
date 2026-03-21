@@ -72,10 +72,9 @@ import org.springframework.context.annotation.Primary;
 @Slf4j
 @Configuration
 @InfraGenerated
-public class JacksonConfiguration {
+public class JacksonConf {
 
-  private static final String APPLICATION_BASE_PACKAGE =
-      getGrandparentPackage(JacksonConfiguration.class);
+  private static final String APPLICATION_BASE_PACKAGE = getGrandparentPackage(JacksonConf.class);
 
   /**
    * Creates the primary ObjectMapper bean with security hardening and feature configuration.

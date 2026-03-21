@@ -5,7 +5,7 @@ import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
-import com.example.arinfra.config.JacksonConfiguration.PolymorphicTypeRegistrar;
+import com.example.arinfra.config.JacksonConf.PolymorphicTypeRegistrar;
 import com.example.arinfra.event.model.InfraEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
