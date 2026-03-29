@@ -165,7 +165,7 @@ class HealthEventServiceIT {
     List<DummyEvent> capturedEvents = eventsCaptor.getValue();
 
     for (int i = 0; i < eventCount; i++) {
-      assertEquals(eventIds.get(i), capturedEvents.get(i).getUuid());
+      assertEquals(eventIds.get(i), capturedEvents.get(i).getId());
     }
   }
 
@@ -179,7 +179,7 @@ class HealthEventServiceIT {
     List<DummyEvent> capturedEvents = eventsCaptor.getValue();
 
     for (int i = 0; i < eventCount; i++) {
-      assertEquals(eventIds.get(i), capturedEvents.get(i).getUuid());
+      assertEquals(eventIds.get(i), capturedEvents.get(i).getId());
     }
   }
 

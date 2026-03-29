@@ -1,6 +1,9 @@
 package com.example.arinfra.conf;
 
+import static java.util.UUID.randomUUID;
+
 import com.example.arinfra.InfraGenerated;
+import java.util.UUID;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.RabbitMQContainer;
@@ -52,6 +55,8 @@ import org.testcontainers.utility.DockerImageName;
 @InfraGenerated
 @TestConfiguration
 public class RabbitMQConf {
+
+  public static final UUID RMQ_ROUTING_KEY = randomUUID();
 
   /**
    * Testcontainers RabbitMQ instance with management plugin enabled. Configured with reuse disabled
@@ -121,6 +126,6 @@ public class RabbitMQConf {
     registry.add("app.rabbitmq.ssl", () -> "false");
     registry.add("spring.rabbitmq.exchange", () -> "infra-event-exchange");
     registry.add("spring.rabbitmq.queue", () -> "infra-health-queue");
-    registry.add("spring.rabbitmq.routing-key", () -> "spring.event.key");
+    registry.add("spring.rabbitmq.routing-key", () -> RMQ_ROUTING_KEY);
   }
 }

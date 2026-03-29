@@ -1,10 +1,10 @@
 package com.example.arinfra.event.model;
 
 import com.example.arinfra.InfraGenerated;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 /**
@@ -24,6 +24,8 @@ import lombok.Getter;
  */
 @InfraGenerated
 @Getter
+@AllArgsConstructor
+@Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DummyEvent extends InfraEvent {
 
@@ -33,31 +35,13 @@ public class DummyEvent extends InfraEvent {
    * Unique identifier for this event instance. Used for tracing and correlation across distributed
    * systems.
    */
-  private final String uuid;
+  private String id;
 
   /**
    * Duration in seconds that the consumer should wait before processing this event. Used to
    * simulate processing time in health checks and load testing.
    */
-  private final int waitDurationBeforeConsumingInSeconds;
-
-  /**
-   * Constructs a DummyEvent with the specified parameters.
-   *
-   * <p>The {@link JsonCreator} annotation enables Jackson to deserialize JSON messages into
-   * DummyEvent instances using this constructor.
-   *
-   * @param uuid unique identifier for the event
-   * @param waitDurationBeforeConsumingInSeconds simulated processing delay in seconds
-   */
-  @JsonCreator
-  public DummyEvent(
-      @JsonProperty("uuid") String uuid,
-      @JsonProperty("waitDurationBeforeConsumingInSeconds")
-          int waitDurationBeforeConsumingInSeconds) {
-    this.uuid = uuid;
-    this.waitDurationBeforeConsumingInSeconds = waitDurationBeforeConsumingInSeconds;
-  }
+  private int waitDurationBeforeConsumingInSeconds;
 
   /**
    * Returns the maximum duration allowed for processing this event.
