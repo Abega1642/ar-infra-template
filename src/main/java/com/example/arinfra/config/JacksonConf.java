@@ -1,12 +1,9 @@
 package com.example.arinfra.config;
 
-import static com.example.arinfra.file.PackageUtils.getGrandparentPackage;
-import static org.owasp.encoder.Encode.forJava;
-
+import com.example.arinfra.ArInfraApplication;
 import com.example.arinfra.InfraGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -23,76 +20,79 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Jackson ObjectMapper configuration with security controls.
+ * Central Jackson {@link ObjectMapper} configuration for the application.
  *
- * <p>This configuration provides a production-ready ObjectMapper with security hardening to prevent
- * common JSON deserialization vulnerabilities while maintaining flexibility for application
- * development.
+ * <p>Produces a single, security-hardened {@link ObjectMapper} bean registered as {@code @Primary},
  *
- * <p><b>Security Features:</b>
+ * <p>ensuring that all Spring infrastructure components (MVC message converters, Spring Data
  *
- * <ul>
- *   <li><b>Polymorphic Type Validation:</b> Allowlist-based validation prevents arbitrary class
- *       instantiation (prevents RCE via deserialization gadgets)
- *   <li><b>No Default Typing:</b> Default typing is explicitly disabled to prevent injection
- *       attacks
- *   <li><b>Strict Number Handling:</b> Prevents integer overflow and floating-point precision
- *       issues
- *   <li><b>Content Validation:</b> Validates JSON structure and prevents malformed input
- * </ul>
+ * <p>serializers, etc.) and application code that auto-wires {@link ObjectMapper} share one
  *
- * <p><b>Functionality Features:</b>
+ * <p>consistently secured instance.
  *
- * <ul>
- *   <li><b>Java Time Support:</b> Native handling of java.time.* types (LocalDateTime, Instant,
- *       etc.)
- *   <li><b>JDK 8 Support:</b> Optional types (Optional&lt;T&gt;)
- *   <li><b>Parameter Names:</b> Preserves parameter names for cleaner JSON binding
- *   <li><b>Flexible Deserialization:</b> Backward compatibility with unknown properties
- *   <li><b>Null Handling:</b> Configurable null and empty value handling
- *   <li><b>Date Formats:</b> ISO-8601 standardized date/time formatting
- *   <li><b>Naming Strategy:</b> snake_case for API consistency
- * </ul>
+ * <p>Configuration is applied in a deterministic, ordered sequence:
  *
- * <p><b>Compliance:</b>
+ * <ol>
+ *   <li>Security constraints - establishes the trust boundary before any other feature can interact
+ *       <p>with type resolution.
+ *   <li>Module registration - extends supported types within the established boundary.
+ *   <li>Serialization features - controls JSON output shape.
+ *   <li>Deserialization features - controls JSON input acceptance under the principle of least
+ *       <p>permissiveness.
+ *   <li>Parser features - enforces RFC 8259 structural compliance.
+ *   <li>Property handling - naming strategy and inclusion policy, defined in one place to prevent
+ *       <p>silent overrides across methods.
+ * </ol>
+ *
+ * <p><b>Security compliance:</b>
  *
  * <ul>
- *   <li>OWASP Top 10 2021 - A8 (Software and Data Integrity Failures)
+ *   <li>OWASP Top 10 2021 - A08 (Software and Data Integrity Failures)
  *   <li>CWE-502 (Deserialization of Untrusted Data)
- *   <li>OWASP API Security Top 10 - API8 (Injection)
+ *   <li>CWE-20 (Improper Input Validation)
+ *   <li>CWE-400 (Uncontrolled Resource Consumption)
+ *   <li>CWE-436 (Interpretation Conflict)
+ *   <li>RFC 8259 (The JavaScript Object Notation Data Interchange Format)
  * </ul>
  *
- * @see <a
- *     href="https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data">OWASP
- *     Deserialization</a>
- * @see <a
- *     href="https://github.com/FasterXML/jackson-docs/wiki/JacksonPolymorphicDeserialization">Jackson
- *     Polymorphic Deserialization</a>
+ * @see <a href="https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data">
+ *     <p>OWASP - Deserialization of Untrusted Data</a>
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259 - JSON Specification</a>
+ * @see <a href="https://github.com/FasterXML/jackson-databind/blob/2.x/docs/security.md">Jackson
+ *     <p>Security Notes</a>
  */
 @Slf4j
 @Configuration
 @InfraGenerated
 public class JacksonConf {
 
-  private static final String APPLICATION_BASE_PACKAGE = getGrandparentPackage(JacksonConf.class);
+  /**
+   * Application root package, sourced from {@link ArInfraApplication} which resides at the root
+   *
+   * <p>package by Spring Boot convention.
+   *
+   * <p>This constant is derived from a compile-time class reference and is therefore fully
+   *
+   * <p>controlled by the codebase. It is never influenced by external input and carries no
+   *
+   * <p>log-injection risk.
+   *
+   * <p>Used exclusively to restrict polymorphic deserialization to types owned by this application.
+   *
+   * <p>See {@link #configureSecurityFeatures(ObjectMapper)}.
+   */
+  private static final String APPLICATION_BASE_PACKAGE =
+      ArInfraApplication.class.getPackage().getName();
+  ;
 
   /**
-   * Creates the primary ObjectMapper bean with security hardening and feature configuration.
+   * Creates the primary {@link ObjectMapper} bean.
    *
-   * <p>This ObjectMapper is marked as {@code @Primary} and will be used throughout the application
-   * for all JSON serialization/deserialization operations, including Spring MVC's HTTP message
-   * conversion.
+   * <p>Marked {@code @Primary} so that every Spring component that injects {@link ObjectMapper}
    *
-   * <p><b>Security Considerations:</b>
+   * <p>without an explicit qualifier receives this secured instance.
    *
-   * <ul>
-   *   <li>Default typing is DISABLED - prevents polymorphic deserialization attacks
-   *   <li>Polymorphic type validator restricts deserialization to application packages only
-   *   <li>Strict number parsing prevents overflow attacks
-   *   <li>Duplicate key detection prevents ambiguous JSON
-   * </ul>
-   *
-   * @return fully configured and secured ObjectMapper instance
+   * @return a fully configured, security-hardened {@link ObjectMapper}
    */
   @Bean
   @Primary
@@ -105,143 +105,251 @@ public class JacksonConf {
     configureParserFeatures(mapper);
     configurePropertyHandling(mapper);
 
-    log.info("ObjectMapper configured with security hardening and application-wide settings");
+    log.info(
+        "ObjectMapper initialized. Polymorphic deserialization restricted to [{}]",
+        APPLICATION_BASE_PACKAGE);
+
     return mapper;
   }
 
   /**
-   * Configures security features to prevent deserialization attacks.
+   * Establishes the trust boundary for polymorphic type resolution.
    *
-   * <p><b>Critical Security Settings:</b>
+   * <p>Jackson's polymorphic deserialization, when unrestricted, allows an attacker to supply a
    *
-   * <ul>
-   *   <li>Polymorphic type validation with application package allowlist
-   *   <li>No default typing enabled (would be a critical vulnerability)
-   *   <li>Only application classes can be polymorphically deserialized
-   * </ul>
+   * <p>crafted {@code @class} or {@code @type} field in a JSON payload that causes Jackson to
+   *
+   * <p>instantiate and invoke methods on arbitrary JVM classes available on the classpath (gadget
+   *
+   * <p>chains). This is a well-documented Remote Code Execution vector with multiple assigned CVEs.
+   *
+   * <p>The {@link BasicPolymorphicTypeValidator} configured here restricts deserialization to types
+   *
+   * <p>whose base class or subtype resides within the application root package. All other types are
+   *
+   * <p>rejected by the validator before instantiation occurs.
+   *
+   * <p>Default typing is intentionally NOT activated. Calling {@code activateDefaultTyping(...)}
+   *
+   * <p>would apply polymorphic type embedding globally, dramatically widening the attack surface
+   * even
+   *
+   * <p>with a type validator in place. Polymorphic handling must be opted into explicitly per type
+   * via
+   *
+   * <p>{@code @JsonTypeInfo} and {@code @JsonSubTypes}.
+   *
+   * @param mapper the {@link ObjectMapper} to secure
+   * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-7525">CVE-2017-7525</a>
+   * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-14379">CVE-2019-14379</a>
+   * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-36518">CVE-2020-36518</a>
+   * @see <a href="https://github.com/FasterXML/jackson-databind/blob/2.x/docs/security.md">Jackson
+   *     <p>Security Notes</a>
    */
-  private void configureSecurityFeatures(ObjectMapper om) {
+  private void configureSecurityFeatures(ObjectMapper mapper) {
     PolymorphicTypeValidator typeValidator =
         BasicPolymorphicTypeValidator.builder()
             .allowIfBaseType(APPLICATION_BASE_PACKAGE)
             .allowIfSubType(APPLICATION_BASE_PACKAGE)
             .build();
+    mapper.setPolymorphicTypeValidator(typeValidator);
 
-    om.setPolymorphicTypeValidator(typeValidator);
-
-    // IMPORTANT: Do NOT call om.enableDefaultTyping() or activateDefaultTyping()
-    // This would enable polymorphic deserialization globally and create RCE vulnerabilities
-
-    log.debug(
-        "Security: Polymorphic type validation restricted to package: {}",
-        forJava(APPLICATION_BASE_PACKAGE));
+    log.debug("Polymorphic type validation restricted to [{}]", APPLICATION_BASE_PACKAGE);
   }
 
   /**
-   * Registers Jackson modules for enhanced type support.
-   *
-   * <p>Modules provide serialization/deserialization support for:
+   * Registers the standard Jackson modules required for full Java type support.
    *
    * <ul>
-   *   <li>Java 8 date/time types (LocalDateTime, Instant, ZonedDateTime, etc.)
-   *   <li>Java 8 Optional types (Optional&lt;T&gt;)
-   *   <li>Parameter name preservation for constructor/method parameters
+   *   <li>{@link JavaTimeModule} - serialization and deserialization of {@code java.time.*} types
+   *       <p>({@code LocalDateTime}, {@code Instant}, {@code ZonedDateTime}, etc.). Replaces the
+   *       <p>deprecated {@code JSR310Module}.
+   *   <li>{@link Jdk8Module} - support for {@code Optional<T>} and other JDK 8 types.
+   *   <li>{@link ParameterNamesModule} - enables binding via constructor and factory-method
+   *       <p>parameter names, removing the need for {@code @JsonProperty} on every field.
    * </ul>
+   *
+   * <p>Although Spring Boot auto-configuration detects these modules on the classpath and registers
+   *
+   * <p>them automatically, explicit registration here guarantees deterministic behavior regardless
+   * of
+   *
+   * <p>auto-configuration ordering or classpath scanning state.
+   *
+   * @param mapper the {@link ObjectMapper} to configure
    */
   private void registerModules(ObjectMapper mapper) {
+
     mapper.registerModule(new JavaTimeModule());
     mapper.registerModule(new Jdk8Module());
     mapper.registerModule(new ParameterNamesModule());
 
-    log.debug("Registered Jackson modules: JavaTime, JDK8, ParameterNames");
+    log.debug("Registered modules: JavaTimeModule, Jdk8Module, ParameterNamesModule");
   }
 
   /**
-   * Configures serialization behavior for JSON output.
-   *
-   * <p><b>Serialization Settings:</b>
+   * Configures JSON serialization (output) behavior.
    *
    * <ul>
-   *   <li>Dates as ISO-8601 strings (not timestamps) for human readability
-   *   <li>Empty collections/arrays written (not omitted) for API clarity
-   *   <li>Pretty printing disabled for production (reduces payload size)
+   *   <li>{@code WRITE_DATES_AS_TIMESTAMPS} disabled - {@code java.time.*} types are serialized as
+   *       <p>ISO-8601 strings. Numeric timestamps are ambiguous across time zones and lack
+   *       <p>self-documentation for API consumers.
+   *   <li>{@code WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS} disabled - millisecond resolution is
+   *       <p>consistent with the deserialization setting and sufficient for all application use
+   *       cases.
+   *       <p>Nanoseconds increase payload size without benefit.
+   *   <li>{@code INDENT_OUTPUT} disabled - compact output is required in production.
+   *       <p>Pretty-printing increases payload size and provides no machine-readable benefit.
    * </ul>
+   *
+   * <p>The serialization inclusion policy (NON_NULL) is set exclusively in {@link
+   * <p>#configurePropertyHandling(ObjectMapper)} to maintain a single authoritative source and
+   * prevent
+   *
+   * <p>silent overrides.
+   *
+   * @param mapper the {@link ObjectMapper} to configure
    */
-  private void configureSerializationFeatures(ObjectMapper om) {
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    om.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-    om.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-    om.disable(SerializationFeature.INDENT_OUTPUT); // Disable pretty-print for production
+  private void configureSerializationFeatures(ObjectMapper mapper) {
+    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    mapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
+    mapper.disable(SerializationFeature.INDENT_OUTPUT);
 
-    log.debug("Serialization: Dates as ISO-8601, no timestamps, compact output");
+    log.debug("Serialization: ISO-8601 dates, nanoseconds disabled, compact output");
   }
 
   /**
-   * Configures deserialization behavior for JSON input.
+   * Configures JSON deserialization (input) behavior under the principle of least permissiveness:
    *
-   * <p><b>Deserialization Settings:</b>
+   * <p>only what is explicitly required for application operation is enabled.
+   *
+   * <p><b>Enabled:</b>
    *
    * <ul>
-   *   <li>Unknown properties ignored for backward compatibility
-   *   <li>Empty strings accepted as null for flexible input handling
-   *   <li>Fail on null for primitives (prevents unexpected NullPointerExceptions)
-   *   <li>Read date timestamps as milliseconds
-   *   <li>Accept single values as arrays for API flexibility
+   *   <li>{@code FAIL_ON_NULL_FOR_PRIMITIVES} - rejects explicit {@code null} for primitive fields.
+   *       <p>Silent zero/false defaults mask client-side contract violations and can cause
+   *       undetected
+   *       <p>data corruption.
+   *   <li>{@code FAIL_ON_NUMBERS_FOR_ENUMS} - rejects integer ordinal coercion for enum fields.
+   *       <p>Ordinal-based binding is an implicit, fragile contract that breaks silently when enum
+   *       <p>declaration order changes.
+   *   <li>{@code USE_BIG_DECIMAL_FOR_FLOATS} - floating-point values are bound as {@link
+   *       <p>java.math.BigDecimal}, preventing IEEE 754 precision loss on financial or scientific
+   *       <p>data.
+   *   <li>{@code USE_BIG_INTEGER_FOR_INTS} - integer values are bound as {@link
+   *       <p>java.math.BigInteger}, preventing silent overflow on large numeric payloads.
+   *   <li>{@code READ_DATE_TIMESTAMPS_AS_NANOSECONDS} disabled - consistent with the serialization
+   *       <p>setting; millisecond resolution is the application standard.
    * </ul>
+   *
+   * <p><b>Intentionally NOT enabled:</b>
+   *
+   * <ul>
+   *   <li>{@code FAIL_ON_UNKNOWN_PROPERTIES} - disabled to support rolling deployments and
+   *       <p>incremental API evolution without breaking existing clients. Stricter validation can
+   *       be
+   *       <p>applied per endpoint via {@code @JsonIgnoreProperties(ignoreUnknown = false)}.
+   *   <li>{@code ACCEPT_EMPTY_STRING_AS_NULL_OBJECT} - silent coercion of {@code ""} to {@code
+   *       <p>null} combined with {@code FAIL_ON_NULL_FOR_PRIMITIVES} creates an unintentional
+   *       <p>denial-of-service vector: any client sending an empty string for a primitive field
+   *       <p>triggers a deserialization exception that can be exploited to produce error-handling
+   *       <p>overhead or logging storms (CWE-400).
+   *   <li>{@code ACCEPT_SINGLE_VALUE_AS_ARRAY} - silently wrapping scalar values into collections
+   *       <p>hides client intent and can bypass validation logic that asserts whether a list was
+   *       <p>explicitly provided by the caller (OWASP API3:2023).
+   * </ul>
+   *
+   * @param mapper the {@link ObjectMapper} to configure
+   * @see <a href="https://cwe.mitre.org/data/definitions/400.html">CWE-400</a>
+   * @see <a
+   *     <p>href="https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/">
+   *     <p>OWASP API3:2023 - Broken Object Property Level Authorization</a>
    */
   private void configureDeserializationFeatures(ObjectMapper mapper) {
     mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-    mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    mapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
     mapper.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
     mapper.enable(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS);
-    mapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
     mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
     mapper.enable(DeserializationFeature.USE_BIG_INTEGER_FOR_INTS);
 
-    log.debug("Deserialization: Flexible input, strict primitives, overflow protection");
+    log.debug(
+        "Deserialization: strict primitives and enums, overflow protection, no silent coercions");
   }
 
   /**
-   * Configures JSON parser features for input validation.
+   * Configures JSON parser features for strict compliance with RFC 8259.
    *
-   * <p><b>Parser Settings:</b>
+   * <p>Only {@code STRICT_DUPLICATE_DETECTION} is enabled. All relaxed parsing features are
+   *
+   * <p>intentionally disabled under the principle of least permissiveness.
+   *
+   * <p><b>Enabled:</b>
    *
    * <ul>
-   *   <li>Comments allowed in JSON for development/debugging
-   *   <li>Unquoted field names allowed for relaxed parsing
-   *   <li>Single quotes allowed as alternative to double quotes
-   *   <li>Duplicate keys rejected to prevent ambiguous input
-   *   <li>Trailing commas allowed for cleaner JSON editing
+   *   <li>{@code STRICT_DUPLICATE_DETECTION} - duplicate object keys are rejected. RFC 8259 Section
+   *       <p>4 declares duplicate keys as undefined behavior. Parsers that silently resolve
+   *       duplicates
+   *       <p>by taking the last value can be exploited to shadow fields that have already passed
+   *       <p>validation.
    * </ul>
+   *
+   * <p><b>Intentionally NOT enabled:</b>
+   *
+   * <ul>
+   *   <li>{@code ALLOW_COMMENTS} - JSON comments are not part of RFC 8259. Enabling them creates a
+   *       <p>differential parsing risk: an upstream WAF or API gateway validates the payload as
+   *       <p>comment-free JSON while Jackson interprets content embedded within comment structures,
+   *       <p>bypassing upstream protection (CWE-436).
+   *   <li>{@code ALLOW_UNQUOTED_FIELD_NAMES} - violates RFC 8259 Section 4. Accepting structurally
+   *       <p>invalid JSON allows payloads that spec-compliant upstream validators would reject,
+   *       <p>undermining their protection (CWE-20).
+   *   <li>{@code ALLOW_SINGLE_QUOTES} - violates RFC 8259 Section 7. Carries the same bypass risk
+   *       <p>as unquoted field names.
+   *   <li>{@code ALLOW_TRAILING_COMMA} - not part of RFC 8259. Adds parser permissiveness with no
+   *       <p>production justification.
+   * </ul>
+   *
+   * @param mapper the {@link ObjectMapper} to configure
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259 - JSON Specification</a>
+   * @see <a href="https://bishopfox.com/blog/json-interoperability-vulnerabilities">Bishop Fox -
+   *     <p>Differential JSON Parsing Vulnerabilities</a>
+   * @see <a href="https://cwe.mitre.org/data/definitions/436.html">CWE-436</a>
+   * @see <a href="https://cwe.mitre.org/data/definitions/20.html">CWE-20</a>
    */
-  private void configureParserFeatures(ObjectMapper om) {
-    om.enable(JsonParser.Feature.ALLOW_COMMENTS);
-    om.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
-    om.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
-    om.enable(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature());
-    om.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
-
-    log.debug("Parser: Flexible input formats, strict duplicate detection");
+  private void configureParserFeatures(ObjectMapper mapper) {
+    mapper.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
+    log.debug("Parser: RFC 8259 strict compliance, duplicate key detection enabled");
   }
 
   /**
-   * Configures property naming and null handling strategies.
+   * Configures property naming strategy and serialization inclusion policy.
    *
-   * <p><b>Property Settings:</b>
+   * <p>This is the single authoritative location where the inclusion strategy is set. No other
+   *
+   * <p>method in this class touches inclusion policy, eliminating the risk of silent overrides from
+   *
+   * <p>method execution order.
    *
    * <ul>
-   *   <li>snake_case naming for API consistency (camelCase → snake_case)
-   *   <li>Null values excluded from JSON output (reduces payload size)
-   *   <li>Empty collections included for API clarity
+   *   <li>{@link PropertyNamingStrategies#SNAKE_CASE} - maps Java camelCase fields to snake_case
+   *       <p>JSON keys, consistent with REST API conventions and OpenAPI tooling defaults.
+   *   <li>{@link JsonInclude.Include#NON_NULL} applied via {@link
+   *       <p>ObjectMapper#setDefaultPropertyInclusion(JsonInclude.Value)} - the non-deprecated API
+   *       <p>accepting a {@link JsonInclude.Value} that sets both value and content inclusion. Null
+   *       <p>fields are omitted from output, reducing payload size. Empty collections are retained,
+   *       <p>making list-returning endpoints predictable for clients that iterate results without
+   *       <p>null-checking.
    * </ul>
+   *
+   * @param mapper the {@link ObjectMapper} to configure
    */
-  private void configurePropertyHandling(ObjectMapper om) {
-    om.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-    om.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    om.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
+  private void configurePropertyHandling(ObjectMapper mapper) {
+    mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    mapper.setDefaultPropertyInclusion(
+        JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL));
 
-    log.debug("Properties: snake_case naming, null values excluded");
+    log.debug("Properties: SNAKE_CASE naming, NON_NULL inclusion (value and content)");
   }
 
   /**
