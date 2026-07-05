@@ -28,6 +28,8 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -40,3 +42,5 @@ updates:
       prefix: "ci"
       include: "scope"
     rebase-strategy: "auto"
+    cooldown:
+      default-days: 7

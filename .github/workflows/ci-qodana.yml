@@ -16,7 +16,7 @@ jobs:
       actions: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #7.0.0
       - name: Qodana Scan
         uses: JetBrains/qodana-action@4861e015da555e86a72b862892aba6c2b93e6891
         env:
