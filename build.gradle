@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.14'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -51,8 +51,8 @@ dependencies {
     implementation 'org.owasp.encoder:encoder:1.4.0'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    implementation 'software.amazon.awssdk:s3:2.42.41'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.42.41'
+    implementation 'software.amazon.awssdk:s3:2.46.17'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.46.17'
 
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -76,8 +76,8 @@ dependencies {
 
     testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.icegreen:greenmail:2.1.8'
-    testImplementation 'com.icegreen:greenmail-junit5:2.1.8'
+    testImplementation 'com.icegreen:greenmail:2.1.9'
+    testImplementation 'com.icegreen:greenmail-junit5:2.1.9'
 
 }
 
