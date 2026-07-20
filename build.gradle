@@ -30,7 +30,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.security:spring-security-crypto'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
 
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
@@ -51,8 +51,8 @@ dependencies {
     implementation 'org.owasp.encoder:encoder:1.4.0'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    implementation 'software.amazon.awssdk:s3:2.46.17'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.46.17'
+    implementation 'software.amazon.awssdk:s3:2.47.5'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.47.5'
 
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.mysql:mysql-connector-j'
