@@ -208,7 +208,9 @@ public class EventConf {
   @Bean
   public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
     RabbitTemplate template = new RabbitTemplate(connectionFactory);
+
     template.setMandatory(true);
+
     return template;
   }
 
@@ -327,10 +329,12 @@ public class EventConf {
   public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
       ConnectionFactory connectionFactory, StatefulRetryOperationsInterceptor retryInterceptor) {
     SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+
     factory.setConnectionFactory(connectionFactory);
     factory.setAcknowledgeMode(org.springframework.amqp.core.AcknowledgeMode.MANUAL);
     factory.setAdviceChain(retryInterceptor);
     factory.setConcurrentConsumers(Runtime.getRuntime().availableProcessors());
+
     return factory;
   }
 

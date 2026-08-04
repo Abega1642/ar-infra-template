@@ -1,6 +1,7 @@
 package com.example.arinfra.config;
 
 import com.example.arinfra.InfraGenerated;
+import jakarta.validation.constraints.Email;
 import java.util.Properties;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,53 +33,66 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
  *   <li>Protocol: SMTP
  *   <li>Authentication: Enabled
  *   <li>STARTTLS: Enabled for encrypted connections
- *   <li>Debug mode: Enabled for troubleshooting
+ *   <li>Connection, read, and write timeouts: bounded, see {@link #mailSender()}
  * </ul>
+ *
+ * <p><b>Security compliance:</b>
+ *
+ * <ul>
+ *   <li>CWE-532 (Insertion of Sensitive Information into Log File)
+ *   <li>CWE-668 (Exposure of Resource to Wrong Sphere)
+ *   <li>CWE-400 (Uncontrolled Resource Consumption)
+ * </ul>
+ *
+ * @see <a href="https://cwe.mitre.org/data/definitions/532.html">CWE-532</a>
+ * @see <a href="https://cwe.mitre.org/data/definitions/668.html">CWE-668</a>
  */
 @InfraGenerated
-@Getter
 @Configuration
 public class EmailConf {
 
-  /** SMTP server hostname for sending emails. */
-  private final String smtpHost;
+  /** Connection timeout, bounding how long a socket connect attempt to the SMTP host may block. */
+  private static final int CONNECTION_TIMEOUT_MILLIS = 5_000;
 
-  /** SMTP server port number (typically 587 for STARTTLS). */
-  private final int smtpPort;
+  /** Read timeout, bounding how long a read on an established SMTP connection may block. */
+  private static final int READ_TIMEOUT_MILLIS = 3_000;
 
-  /** Username for SMTP authentication. */
-  private final String username;
-
-  /** Password for SMTP authentication. */
-  private final String password;
-
-  /** Default "from" email address for outgoing emails. */
-  private final String fromEmail;
+  /** Write timeout, bounding how long a write to the SMTP connection may block. */
+  private static final int WRITE_TIMEOUT_MILLIS = 5_000;
 
   /**
-   * Constructs the email configuration with SMTP server parameters.
-   *
-   * <p>All parameters are injected from application properties and stored for use in the {@link
-   * #mailSender()} bean creation.
-   *
-   * @param smtpHost the SMTP server hostname
-   * @param smtpPort the SMTP server port
-   * @param username the SMTP authentication username
-   * @param password the SMTP authentication password
-   * @param fromEmail the default sender email address
+   * SMTP server hostname for sending emails. No public getter: used only to build {@link
+   * #mailSender()}.
    */
-  public EmailConf(
-      @Value("${spring.mail.host}") String smtpHost,
-      @Value("${spring.mail.port}") int smtpPort,
-      @Value("${spring.mail.username}") String username,
-      @Value("${spring.mail.password}") String password,
-      @Value("${spring.mail.from-email}") String fromEmail) {
-    this.smtpHost = smtpHost;
-    this.smtpPort = smtpPort;
-    this.username = username;
-    this.password = password;
-    this.fromEmail = fromEmail;
-  }
+  @Value("${spring.mail.host}")
+  private String smtpHost;
+
+  /**
+   * SMTP server port number (typically 587 for STARTTLS). No public getter: used only to build
+   * {@link #mailSender()}.
+   */
+  @Value("${spring.mail.port}")
+  private int smtpPort;
+
+  /**
+   * Username for SMTP authentication. No public getter: used only to build {@link #mailSender()}.
+   */
+  @Value("${spring.mail.username}")
+  private String username;
+
+  /**
+   * Password for SMTP authentication. No public getter: used only to build {@link #mailSender()}.
+   */
+  @Value("${spring.mail.password}")
+  private String password;
+
+  /**
+   * Default "from" email address for outgoing emails. Exposed: services need it to build messages.
+   */
+  @Getter
+  @Value("${spring.mail.from-email}")
+  @Email
+  private String fromEmail;
 
   /**
    * Creates and configures the JavaMail sender bean.
@@ -89,13 +103,32 @@ public class EmailConf {
    *   <li>SMTP server connection parameters (host, port, credentials)
    *   <li>SMTP protocol with authentication enabled
    *   <li>STARTTLS encryption for secure transmission
-   *   <li>Debug mode enabled for detailed logging
+   *   <li>Bounded connect, read, and write timeouts
    * </ul>
    *
-   * <p>The mail sender can be injected into services for sending emails programmatically throughout
-   * the application.
+   * <p>Debug mode is not enabled here. JavaMail's SMTP debug output prints the full protocol
+   *
+   * <p>transcript, including the {@code AUTH LOGIN} exchange with the base64-encoded username and
+   *
+   * <p>password, to the application log (CWE-532). Base64 is encoding, not encryption, so this is
+   *
+   * <p>equivalent to logging the credential in the clear. If SMTP-level troubleshooting is needed,
+   *
+   * <p>enable it explicitly and temporarily on a non-production environment, never as a hardcoded
+   *
+   * <p>default.
+   *
+   * <p>Timeouts are set explicitly because neither JavaMail nor {@link JavaMailSenderImpl} apply a
+   *
+   * <p>default. Without them, a hung or slow-responding SMTP server blocks the calling thread
+   *
+   * <p>indefinitely; in a bounded thread pool, enough concurrent hangs exhaust it and stop the
+   *
+   * <p>application from serving unrelated requests (CWE-400).
    *
    * @return configured JavaMailSender instance ready for sending emails
+   * @see <a href="https://cwe.mitre.org/data/definitions/532.html">CWE-532</a>
+   * @see <a href="https://cwe.mitre.org/data/definitions/400.html">CWE-400</a>
    */
   @Bean
   public JavaMailSender mailSender() {
@@ -106,10 +139,13 @@ public class EmailConf {
     mailSender.setPassword(password);
 
     Properties props = mailSender.getJavaMailProperties();
-    props.put("mail.transport.protocol", "smtp");
-    props.put("mail.smtp.auth", "true");
-    props.put("mail.smtp.starttls.enable", "true");
-    props.put("mail.debug", "true");
+
+    props.setProperty("mail.transport.protocol", "smtp");
+    props.setProperty("mail.smtp.auth", "true");
+    props.setProperty("mail.smtp.starttls.enable", "true");
+    props.setProperty("mail.smtp.connectiontimeout", String.valueOf(CONNECTION_TIMEOUT_MILLIS));
+    props.setProperty("mail.smtp.timeout", String.valueOf(READ_TIMEOUT_MILLIS));
+    props.setProperty("mail.smtp.writetimeout", String.valueOf(WRITE_TIMEOUT_MILLIS));
 
     return mailSender;
   }

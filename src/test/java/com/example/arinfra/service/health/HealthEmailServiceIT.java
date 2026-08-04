@@ -36,7 +36,7 @@ class HealthEmailServiceIT {
 
   private static final String VALID_EMAIL = "test@example.com";
   private static final String INVALID_EMAIL = "invalid-email";
-  private static final String HEALTH_CHECK_PREFIX = "[unfaked health check";
+  private static final String HEALTH_CHECK_PREFIX = "[Test health check";
   private static final String TEST_ATTACHMENT = "test-attachment-12345.txt";
 
   @TempDir Path tempDir;
@@ -111,7 +111,7 @@ class HealthEmailServiceIT {
     Email email = emailCaptor.getAllValues().get(3);
 
     assertNotNull(email.htmlBody());
-    assertTrue(email.htmlBody().contains("Hello from Unfaked!"));
+    assertTrue(email.htmlBody().contains("Hello from Test!"));
   }
 
   @Test

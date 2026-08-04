@@ -126,70 +126,13 @@ public class EventProducer<T extends InfraEvent> implements Consumer<Collection<
    */
   private void publishEvent(T event) {
     try {
-      String payload = serializeEvent(event);
-      sendToRabbitMQ(payload);
-      logSuccessfulPublish(event);
+      String payload = objectMapper.writeValueAsString(event);
+      rabbitTemplate.convertAndSend(exchangeName, routingKey, payload);
+      log.debug("Published event: {}", event.getClass().getSimpleName());
     } catch (JsonProcessingException e) {
-      logSerializationError(event, e);
+      log.error("Serialization failed for event: {}", event, e);
     } catch (Exception e) {
-      logPublishingError(event, e);
+      log.error("Publishing failed for event: {}", event, e);
     }
-  }
-
-  /**
-   * Serializes an event to its JSON string representation.
-   *
-   * <p>Uses the configured {@link ObjectMapper} which preserves polymorphic type information
-   * through the {@link com.fasterxml.jackson.annotation.JsonTypeInfo} annotation on {@link
-   * InfraEvent}.
-   *
-   * @param event the event to serialize
-   * @return the JSON string representation of the event
-   * @throws JsonProcessingException if serialization fails
-   */
-  private String serializeEvent(T event) throws JsonProcessingException {
-    return objectMapper.writeValueAsString(event);
-  }
-
-  /**
-   * Sends a serialized event payload to RabbitMQ.
-   *
-   * <p>Uses the {@link RabbitTemplate} to publish the message to the configured exchange with the
-   * configured routing key. The template's mandatory flag ensures unroutable messages are returned
-   * rather than silently dropped.
-   *
-   * @param payload the JSON payload to send
-   */
-  private void sendToRabbitMQ(String payload) {
-    rabbitTemplate.convertAndSend(exchangeName, routingKey, payload);
-  }
-
-  /**
-   * Logs successful event publication at DEBUG level.
-   *
-   * @param event the successfully published event
-   */
-  private void logSuccessfulPublish(T event) {
-    log.debug("Published event: {}", event.getClass().getSimpleName());
-  }
-
-  /**
-   * Logs serialization errors at ERROR level with full exception details.
-   *
-   * @param event the event that failed to serialize
-   * @param e the serialization exception
-   */
-  private void logSerializationError(T event, JsonProcessingException e) {
-    log.error("Serialization failed for event: {}", event, e);
-  }
-
-  /**
-   * Logs publishing errors at ERROR level with full exception details.
-   *
-   * @param event the event that failed to publish
-   * @param e the publishing exception
-   */
-  private void logPublishingError(T event, Exception e) {
-    log.error("Publishing failed for event: {}", event, e);
   }
 }

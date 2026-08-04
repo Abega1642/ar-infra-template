@@ -179,7 +179,7 @@ public class InfraEventTypeRegistrar implements PolymorphicTypeRegistrar {
 
     if (!InfraEvent.class.isAssignableFrom(loadedClass)) {
       log.warn("Loaded class does not extend InfraEvent: {}", forJava(className));
-      throw new IllegalArgumentException("Class does not extend InfraEvent: " + className);
+      throw new IllegalArgumentException(format("Class does not extend InfraEvent: %s", className));
     }
 
     return loadedClass;

@@ -132,8 +132,7 @@ public class RabbitConf {
    * Declares the main durable queue where published events are stored for consumption.
    *
    * <p>This queue is the entry point for all events in the arInfra system. When {@link
-   * com.example.arinfra.event.model.EventProducer} publishes an event, RabbitMQ routes it here via
-   * the main exchange and binding.
+   * EventProducer} publishes an event, RabbitMQ routes it here via the main exchange and binding.
    *
    * <p><b>Durability:</b> the queue is declared durable, meaning it and its messages survive a
    * RabbitMQ broker restart.
@@ -177,9 +176,8 @@ public class RabbitConf {
    * Binds the main queue to the main exchange using the configured routing key.
    *
    * <p>This binding is what connects a published message to its destination queue. When {@link
-   * com.example.arinfra.event.model.EventProducer} sends a message to the main exchange with the
-   * configured routing key, RabbitMQ uses this binding to deliver it to the main queue, where
-   * {@link com.example.arinfra.event.consumer.EventConsumer} will pick it up.
+   * EventProducer} sends a message to the main exchange with the configured routing key, RabbitMQ
+   * uses this binding to deliver it to the main queue, where {@link EventConsumer} will pick it up.
    *
    * @param myQueue the main queue bean
    * @param myExchange the main exchange bean

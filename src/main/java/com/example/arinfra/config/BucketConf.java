@@ -7,12 +7,13 @@ import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.time.Duration;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -35,12 +36,30 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
  *   <li>{@code cloud.storage.application.key} - Application key secret for authentication
  *   <li>{@code cloud.storage.bucket.name} - Target bucket name
  *   <li>{@code cloud.storage.region} - Storage region (e.g., "us-west-006")
- *   <li>{@code cloud.storage.full-endpoint} - Endpoint URL prefix (e.g., "<a
- *       href="">https://s3.us-west-006.backblaze.com</a>.")
+ *   <li>{@code cloud.storage.full-endpoint} - Endpoint URL prefix (e.g., " href=""><a
+ *       href="https://s3.us-west-006.backblaze.com">...</a></a>.")
  * </ul>
  *
+ * <p><b>Checksum configuration:</b> {@code RequestChecksumCalculation.WHEN_REQUIRED} and {@code
+ * ResponseChecksumValidation.WHEN_REQUIRED} are set on both {@link S3Client} and {@link
+ * <p>S3AsyncClient}, replacing the deprecated {@code S3Configuration#checksumValidationEnabled}.
+ *
+ * <p>Since AWS SDK 2.30.0 the default request checksum behavior is {@code WHEN_SUPPORTED}, which
+ *
+ * <p>attaches a CRC32 trailer to requests. Third-party S3-compatible backends, including some B2
+ *
+ * <p>deployments, do not all support that trailer and can reject the request. {@code
+ * <p>WHEN_REQUIRED} restricts checksum calculation to operations that mandate it, matching AWS's
+ *
+ * <p>own guidance for non-AWS S3-compatible endpoints.
+ *
  * <p>The configuration automatically cleans up resources on application shutdown via the {@link
- * PreDestroy} lifecycle hook.
+ * PreDestroy} lifecycle hook, including the underlying {@link S3AsyncClient} used by the transfer
+ * manager, which the transfer manager does not close on its own.
+ *
+ * @see <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/s3-checksums.html">
+ *     <p>AWS SDK for Java 2.x - Data integrity protection with checksums</a>
+ * @see <a href="https://cwe.mitre.org/data/definitions/772.html">CWE-772</a>
  */
 @InfraGenerated
 @Configuration
@@ -67,6 +86,15 @@ public class BucketConf {
   @Getter private final S3Client s3Client;
 
   /**
+   * The async client backing {@link #s3TransferManager}. Not exposed via {@code @Getter}: it
+   *
+   * <p>exists only to be closed alongside the transfer manager, which does not close it on its
+   *
+   * <p>own. See {@link #cleanup()}.
+   */
+  private final S3AsyncClient s3AsyncClient;
+
+  /**
    * Constructs and configures the S3-compatible storage clients.
    *
    * <p>Initializes the AWS S3 SDK with Backblaze B2 credentials and endpoint configuration. Creates
@@ -77,10 +105,9 @@ public class BucketConf {
    * @param applicationKey the application key secret for B2 authentication
    * @param bucketName the target bucket name
    * @param regionString the storage region identifier
-   * @param fullEndpoint the endpoint URL (e.g., ""<a
-   *     href="">https://s3.us-west-006.backblaze.com</a>.")
+   * @param fullEndpoint the endpoint URL (e.g., "" href=""><a
+   *     href="https://s3.us-west-006.backblaze.com">...</a></a>.")
    */
-  @SneakyThrows
   public BucketConf(
       @Value("${cloud.storage.key.id}") String keyId,
       @Value("${cloud.storage.application.key}") String applicationKey,
@@ -96,10 +123,7 @@ public class BucketConf {
         StaticCredentialsProvider.create(AwsBasicCredentials.create(keyId, applicationKey));
 
     final S3Configuration s3Configuration =
-        S3Configuration.builder()
-            .checksumValidationEnabled(false)
-            .pathStyleAccessEnabled(true)
-            .build();
+        S3Configuration.builder().pathStyleAccessEnabled(true).build();
 
     final ClientOverrideConfiguration overrideConfiguration =
         ClientOverrideConfiguration.builder()
@@ -114,15 +138,19 @@ public class BucketConf {
             .credentialsProvider(credentialsProvider)
             .serviceConfiguration(s3Configuration)
             .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+            .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
             .build();
 
-    final S3AsyncClient s3AsyncClient =
+    this.s3AsyncClient =
         S3AsyncClient.builder()
             .endpointOverride(endpoint)
             .region(region)
             .credentialsProvider(credentialsProvider)
             .serviceConfiguration(s3Configuration)
             .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+            .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
             .build();
 
     this.s3TransferManager = S3TransferManager.builder().s3Client(s3AsyncClient).build();
@@ -140,17 +168,20 @@ public class BucketConf {
    * Cleans up S3 client resources on application shutdown.
    *
    * <p>This method is automatically invoked by Spring during application shutdown to properly close
-   * the transfer manager and presigner, releasing any underlying network connections and thread
-   * pools.
+   * the transfer manager, the async client backing it, the presigner, and the synchronous client,
+   * releasing any underlying network connections and thread pools.
+   *
+   * <p>{@link S3TransferManager#close()} does not close the {@link S3AsyncClient} it was built
+   *
+   * <p>with, per the AWS SDK javadoc, so {@link #s3AsyncClient} is closed explicitly here.
    *
    * <p>Ensures graceful shutdown and prevents resource leaks.
    */
   @PreDestroy
   public void cleanup() {
-    if (s3TransferManager != null) s3TransferManager.close();
-
-    if (s3Presigner != null) s3Presigner.close();
-
-    if (s3Client != null) s3Client.close();
+    s3TransferManager.close();
+    s3AsyncClient.close();
+    s3Presigner.close();
+    s3Client.close();
   }
 }

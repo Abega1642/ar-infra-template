@@ -1,5 +1,6 @@
 package com.example.arinfra.service.health;
 
+import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Service;
 @InfraGenerated
 public class HealthEmailService {
 
-  private static final String HEALTH_CHECK_PREFIX = "[unfaked health check";
+  private static final String HEALTH_CHECK_PREFIX = "[Test health check";
   private static final String TEST_ATTACHMENT_PREFIX = "test-attachment-";
   private static final String TEST_ATTACHMENT_SUFFIX = ".txt";
 
@@ -79,11 +80,11 @@ public class HealthEmailService {
   private EmailComponents parseEmailComponents(String email) {
     int lastAtIndex = email.lastIndexOf('@');
     if (lastAtIndex <= 0 || lastAtIndex == email.length() - 1) {
-      throw new IllegalArgumentException("Invalid email format: " + email);
+      throw new IllegalArgumentException(format("Invalid email format: %s", email));
     }
 
     String localPart = email.substring(0, lastAtIndex);
-    String domain = "@" + email.substring(lastAtIndex + 1);
+    String domain = format("@%s", email.substring(lastAtIndex + 1));
 
     return new EmailComponents(localPart, domain);
   }
@@ -97,7 +98,7 @@ public class HealthEmailService {
       throws EmailHealthCheckException {
     try {
       InternetAddress ccAddress =
-          new InternetAddress(components.localPart() + "+cc" + components.domain());
+          new InternetAddress(format("%s+cc%s", components.localPart(), components.domain()));
       mailer.accept(
           createEmail(toAddress, List.of(ccAddress), null, "2/5] With cc", null, List.of()));
       log.debug("Sent test email with CC");
@@ -110,7 +111,7 @@ public class HealthEmailService {
       throws EmailHealthCheckException {
     try {
       InternetAddress bccAddress =
-          new InternetAddress(components.localPart() + "+bcc" + components.domain());
+          new InternetAddress(format("%s+bcc%s", components.localPart(), components.domain()));
       mailer.accept(
           createEmail(toAddress, null, List.of(bccAddress), "3/5] With bcc", null, List.of()));
       log.debug("Sent test email with BCC");
@@ -123,7 +124,7 @@ public class HealthEmailService {
     String htmlBody =
         """
         <div>
-            <h1>Hello from Unfaked!</h1>
+            <h1>Hello from Test!</h1>
             <p>This is a <b>test email</b> with HTML content.</p>
         </div>
         """;
@@ -133,8 +134,7 @@ public class HealthEmailService {
 
   private void sendEmailWithAttachment(InternetAddress toAddress) throws EmailHealthCheckException {
     String attachmentContent =
-        String.format(
-            "This is a test attachment from Unfaked.%nTimestamp: %d", System.currentTimeMillis());
+        format("This is a test attachment from Test.%nTimestamp: %d", System.currentTimeMillis());
 
     File attachment = null;
     try {
@@ -172,7 +172,7 @@ public class HealthEmailService {
         to,
         cc != null ? cc : List.of(),
         bcc != null ? bcc : List.of(),
-        HEALTH_CHECK_PREFIX + " " + subjectSuffix,
+        format("%s %s", HEALTH_CHECK_PREFIX, subjectSuffix),
         body,
         attachments);
   }

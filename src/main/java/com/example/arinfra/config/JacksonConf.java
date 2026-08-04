@@ -3,7 +3,9 @@ package com.example.arinfra.config;
 import com.example.arinfra.ArInfraApplication;
 import com.example.arinfra.InfraGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -13,7 +15,6 @@ import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,8 +34,9 @@ import org.springframework.context.annotation.Primary;
  * <p>Configuration is applied in a deterministic, ordered sequence:
  *
  * <ol>
- *   <li>Security constraints - establishes the trust boundary before any other feature can interact
- *       <p>with type resolution.
+ *   <li>Security constraints - establishes the trust boundary (polymorphic type allowlist) and the
+ *       <p>resource-consumption limits (stream read constraints) before any other feature can
+ *       <p>interact with type resolution or input parsing.
  *   <li>Module registration - extends supported types within the established boundary.
  *   <li>Serialization features - controls JSON output shape.
  *   <li>Deserialization features - controls JSON input acceptance under the principle of least
@@ -49,6 +51,7 @@ import org.springframework.context.annotation.Primary;
  * <ul>
  *   <li>OWASP Top 10 2021 - A08 (Software and Data Integrity Failures)
  *   <li>CWE-502 (Deserialization of Untrusted Data)
+ *   <li>CWE-183 (Permissive List of Allowed Inputs)
  *   <li>CWE-20 (Improper Input Validation)
  *   <li>CWE-400 (Uncontrolled Resource Consumption)
  *   <li>CWE-436 (Interpretation Conflict)
@@ -60,6 +63,9 @@ import org.springframework.context.annotation.Primary;
  * @see <a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259 - JSON Specification</a>
  * @see <a href="https://github.com/FasterXML/jackson-databind/blob/2.x/docs/security.md">Jackson
  *     <p>Security Notes</a>
+ * @see <a href="https://github.com/FasterXML/jackson-core/wiki/StreamReadConstraints">Jackson core
+ *     <p>StreamReadConstraints</a>
+ * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-52999">CVE-2025-52999</a>
  */
 @Slf4j
 @Configuration
@@ -80,10 +86,71 @@ public class JacksonConf {
    * <p>Used exclusively to restrict polymorphic deserialization to types owned by this application.
    *
    * <p>See {@link #configureSecurityFeatures(ObjectMapper)}.
+   *
+   * <p>Uses {@link Class#getPackageName()} rather than {@code getPackage().getName()}: the latter
+   *
+   * <p>can return {@code null} for classes without an associated {@link Package} object under
+   *
+   * <p>certain classloaders, whereas {@code getPackageName()} is guaranteed non-null since Java 9.
    */
-  private static final String APPLICATION_BASE_PACKAGE =
-      ArInfraApplication.class.getPackage().getName();
-  ;
+  private static final String APPLICATION_BASE_PACKAGE = ArInfraApplication.class.getPackageName();
+
+  /**
+   * Package-boundary-safe prefix used for polymorphic type allowlisting.
+   *
+   * <p>{@link BasicPolymorphicTypeValidator.Builder#allowIfBaseType(String)} and {@code
+   * allowIfSubType(String)} perform a raw string prefix match, not a package-aware match. Without
+   *
+   * <p>a trailing separator, a base package of {@code com.acme.app} would also match a sibling
+   *
+   * <p>package {@code com.acme.applet}, silently widening the trust boundary (CWE-183). Appending
+   *
+   * <p>the package separator closes this gap while still matching classes declared directly in
+   *
+   * <p>{@link #APPLICATION_BASE_PACKAGE}.
+   *
+   * @see <a href="https://cwe.mitre.org/data/definitions/183.html">CWE-183</a>
+   */
+  private static final String APPLICATION_BASE_PACKAGE_PREFIX =
+      String.format("%s.", APPLICATION_BASE_PACKAGE);
+
+  /**
+   * Resource-consumption limits applied to every {@link com.fasterxml.jackson.core.JsonParser}
+   *
+   * <p>created by this mapper's {@link JsonFactory}.
+   *
+   * <p>Configured explicitly rather than relying on jackson-core's built-in defaults for two
+   *
+   * <p>reasons. First, the defaults have changed across patch releases (jackson-core 2.15.0
+   *
+   * <p>initially shipped {@code maxStringLength=5_000_000}, later raised to {@code 20_000_000}),
+   *
+   * <p>so an implicit default is not a stable contract. Second, jackson-core versions prior to 2.15
+   *
+   * <p>had no nesting-depth limit at all, allowing a deeply nested payload to exhaust the JVM stack
+   *
+   * <p>({@code CVE-2025-52999}). Pinning the values here keeps the guarantee independent of the
+   *
+   * <p>resolved dependency version.
+   *
+   * <p>These limits are directly relevant to {@code USE_BIG_DECIMAL_FOR_FLOATS} and {@code
+   * USE_BIG_INTEGER_FOR_INTS} enabled in {@link #configureDeserializationFeatures(ObjectMapper)}:
+   *
+   * <p>converting an unbounded numeric literal into {@code BigDecimal} or {@code BigInteger} is
+   *
+   * <p>computationally expensive, so bounding the source token length is required for those two
+   *
+   * <p>features to be safe against untrusted input.
+   *
+   * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-52999">CVE-2025-52999</a>
+   * @see <a href="https://cwe.mitre.org/data/definitions/400.html">CWE-400</a>
+   */
+  private static final StreamReadConstraints STREAM_READ_CONSTRAINTS =
+      StreamReadConstraints.builder()
+          .maxNestingDepth(1_000)
+          .maxNumberLength(1_000)
+          .maxStringLength(20_000_000)
+          .build();
 
   /**
    * Creates the primary {@link ObjectMapper} bean.
@@ -98,6 +165,7 @@ public class JacksonConf {
   @Primary
   public ObjectMapper objectMapper() {
     ObjectMapper mapper = new ObjectMapper();
+
     configureSecurityFeatures(mapper);
     registerModules(mapper);
     configureSerializationFeatures(mapper);
@@ -106,14 +174,18 @@ public class JacksonConf {
     configurePropertyHandling(mapper);
 
     log.info(
-        "ObjectMapper initialized. Polymorphic deserialization restricted to [{}]",
-        APPLICATION_BASE_PACKAGE);
+        """
+            ObjectMapper initialized. Polymorphic deserialization restricted to [{}].
+        """,
+        APPLICATION_BASE_PACKAGE_PREFIX);
 
     return mapper;
   }
 
   /**
-   * Establishes the trust boundary for polymorphic type resolution.
+   * Establishes the trust boundary for polymorphic type resolution and bounds the resource cost of
+   *
+   * <p>parsing untrusted input.
    *
    * <p>Jackson's polymorphic deserialization, when unrestricted, allows an attacker to supply a
    *
@@ -125,9 +197,11 @@ public class JacksonConf {
    *
    * <p>The {@link BasicPolymorphicTypeValidator} configured here restricts deserialization to types
    *
-   * <p>whose base class or subtype resides within the application root package. All other types are
+   * <p>whose base class or subtype resides within {@link #APPLICATION_BASE_PACKAGE_PREFIX}, using a
    *
-   * <p>rejected by the validator before instantiation occurs.
+   * <p>trailing package separator to prevent a sibling package from matching the same string prefix
+   *
+   * <p>(CWE-183). All other types are rejected by the validator before instantiation occurs.
    *
    * <p>Default typing is intentionally NOT activated. Calling {@code activateDefaultTyping(...)}
    *
@@ -139,22 +213,46 @@ public class JacksonConf {
    *
    * <p>{@code @JsonTypeInfo} and {@code @JsonSubTypes}.
    *
+   * <p>{@link #STREAM_READ_CONSTRAINTS} is applied to the mapper's {@link JsonFactory} to bound
+   *
+   * <p>maximum nesting depth, numeric token length, and string length, guarding against resource
+   *
+   * <p>exhaustion from crafted payloads (CWE-400). {@code JsonFactory#setStreamReadConstraints} is
+   *
+   * <p>the mutator-style API appropriate for Jackson 2.x; a migration to Jackson 3.x will require
+   *
+   * <p>moving this to {@code JsonFactory.builder().streamReadConstraints(...)} at construction
+   * time,
+   *
+   * <p>since the setter is removed in 3.x.
+   *
    * @param mapper the {@link ObjectMapper} to secure
    * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-7525">CVE-2017-7525</a>
    * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-14379">CVE-2019-14379</a>
    * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-36518">CVE-2020-36518</a>
+   * @see <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-52999">CVE-2025-52999</a>
    * @see <a href="https://github.com/FasterXML/jackson-databind/blob/2.x/docs/security.md">Jackson
    *     <p>Security Notes</a>
    */
   private void configureSecurityFeatures(ObjectMapper mapper) {
     PolymorphicTypeValidator typeValidator =
         BasicPolymorphicTypeValidator.builder()
-            .allowIfBaseType(APPLICATION_BASE_PACKAGE)
-            .allowIfSubType(APPLICATION_BASE_PACKAGE)
+            .allowIfBaseType(APPLICATION_BASE_PACKAGE_PREFIX)
+            .allowIfSubType(APPLICATION_BASE_PACKAGE_PREFIX)
             .build();
-    mapper.setPolymorphicTypeValidator(typeValidator);
 
-    log.debug("Polymorphic type validation restricted to [{}]", APPLICATION_BASE_PACKAGE);
+    mapper.setPolymorphicTypeValidator(typeValidator);
+    mapper.getFactory().setStreamReadConstraints(STREAM_READ_CONSTRAINTS);
+
+    log.debug(
+        """
+        Polymorphic type validation restricted to [{}]. Stream read constraints applied: \
+        maxNestingDepth={}, maxNumberLength={}, maxStringLength={}
+        """,
+        APPLICATION_BASE_PACKAGE_PREFIX,
+        STREAM_READ_CONSTRAINTS.getMaxNestingDepth(),
+        STREAM_READ_CONSTRAINTS.getMaxNumberLength(),
+        STREAM_READ_CONSTRAINTS.getMaxStringLength());
   }
 
   /**
@@ -235,9 +333,11 @@ public class JacksonConf {
    *       <p>declaration order changes.
    *   <li>{@code USE_BIG_DECIMAL_FOR_FLOATS} - floating-point values are bound as {@link
    *       <p>java.math.BigDecimal}, preventing IEEE 754 precision loss on financial or scientific
-   *       <p>data.
+   *       <p>data. Bounded against untrusted-input DoS by {@link #STREAM_READ_CONSTRAINTS} applied
+   *       <p>in {@link #configureSecurityFeatures(ObjectMapper)}.
    *   <li>{@code USE_BIG_INTEGER_FOR_INTS} - integer values are bound as {@link
-   *       <p>java.math.BigInteger}, preventing silent overflow on large numeric payloads.
+   *       <p>java.math.BigInteger}, preventing silent overflow on large numeric payloads. Bounded
+   *       <p>against untrusted-input DoS by {@link #STREAM_READ_CONSTRAINTS} for the same reason.
    *   <li>{@code READ_DATE_TIMESTAMPS_AS_NANOSECONDS} disabled - consistent with the serialization
    *       <p>setting; millisecond resolution is the application standard.
    * </ul>
@@ -262,7 +362,7 @@ public class JacksonConf {
    * @param mapper the {@link ObjectMapper} to configure
    * @see <a href="https://cwe.mitre.org/data/definitions/400.html">CWE-400</a>
    * @see <a
-   *     <p>href="https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/">
+   *     href="https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/"></a>
    *     <p>OWASP API3:2023 - Broken Object Property Level Authorization</a>
    */
   private void configureDeserializationFeatures(ObjectMapper mapper) {
@@ -353,26 +453,23 @@ public class JacksonConf {
   }
 
   /**
-   * Bean for registering polymorphic subtypes automatically.
-   *
-   * <p>This bean is called by Spring after the ObjectMapper is created, allowing custom subtype
-   * registration logic to be added by other configuration classes.
-   *
-   * @param objectMapper the primary ObjectMapper
-   * @return list of polymorphic type registrars
-   */
-  @Bean
-  public List<PolymorphicTypeRegistrar> polymorphicTypeRegistrars(ObjectMapper objectMapper) {
-    // Other configuration classes can implement PolymorphicTypeRegistrar
-    // to automatically register their polymorphic types
-    return List.of();
-  }
-
-  /**
    * Interface for components that need to register polymorphic types with Jackson.
    *
    * <p>Implement this interface in configuration classes that need to register polymorphic subtypes
-   * for secure deserialization.
+   *
+   * <p>for secure deserialization. Every implementing bean is discovered by Spring and invoked
+   *
+   * <p>automatically when the primary {@link ObjectMapper} bean is constructed; see {@link
+   * <p>#objectMapper(List)}.
+   *
+   * <p><b>Warning:</b> do not call {@code mapper.setPolymorphicTypeValidator(...)} from within
+   *
+   * <p>{@link #registerTypes(ObjectMapper)}. Doing so replaces the application-wide trust boundary
+   *
+   * <p>established in {@link #configureSecurityFeatures(ObjectMapper)} wholesale, since {@link
+   * <p>ObjectMapper} does not support additive validator composition. Register concrete subtypes
+   *
+   * <p>via {@code mapper.registerSubtypes(...)} or module registration instead.
    *
    * <p>Example:
    *
@@ -380,7 +477,7 @@ public class JacksonConf {
    * @Component
    * public class EventTypeRegistrar implements PolymorphicTypeRegistrar {
    *     public void registerTypes(ObjectMapper mapper) {
-   *         // Auto-discover and register event types
+   *         mapper.registerSubtypes(new NamedType(OrderCreatedEvent.class, "order-created"));
    *     }
    * }
    * }</pre>

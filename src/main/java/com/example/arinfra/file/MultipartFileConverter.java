@@ -1,5 +1,6 @@
 package com.example.arinfra.file;
 
+import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
@@ -42,7 +43,7 @@ public class MultipartFileConverter implements Function<MultipartFile, File> {
     log.debug("Converting multipart file to File: filename={}", forJava(originalFilename));
 
     try {
-      String safeSuffix = "." + extractSafeFileExtension(originalFilename);
+      String safeSuffix = format(".%s", extractSafeFileExtension(originalFilename));
       File tempFile = tempFileManager.createSecureTempFile(UPLOAD_PREFIX, safeSuffix);
 
       multipartFile.transferTo(tempFile);

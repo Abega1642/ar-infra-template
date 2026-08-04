@@ -32,25 +32,6 @@ public class HealthEventService {
   public List<String> triggerDummyEvents(int nbEvent, int waitInSeconds) {
     log.info("Triggering {} dummy event(s) with {}s wait time", nbEvent, waitInSeconds);
 
-    validateEventCount(nbEvent);
-    validateWaitTime(waitInSeconds);
-
-    List<String> eventIds = generateEventIds(nbEvent);
-    List<DummyEvent> events = createDummyEvents(eventIds, waitInSeconds);
-
-    publishEvents(events);
-
-    log.info("Successfully triggered {} dummy event(s)", nbEvent);
-    return eventIds;
-  }
-
-  /**
-   * Validates that the event count is within acceptable bounds.
-   *
-   * @param nbEvent the number of events to validate
-   * @throws IllegalArgumentException if the count is invalid
-   */
-  private void validateEventCount(int nbEvent) {
     if (nbEvent < MIN_EVENT_COUNT || nbEvent > MAX_EVENT_COUNT) {
       String errorMessage =
           String.format(
@@ -59,21 +40,23 @@ public class HealthEventService {
       log.error(errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
-  }
 
-  /**
-   * Validates that the wait time is non-negative.
-   *
-   * @param waitInSeconds the wait time to validate
-   * @throws IllegalArgumentException if the wait time is negative
-   */
-  private void validateWaitTime(int waitInSeconds) {
     if (waitInSeconds < 0) {
       String errorMessage =
           String.format("Wait time must be non-negative, but was: %d", waitInSeconds);
       log.error(errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
+
+    List<String> eventIds = generateEventIds(nbEvent);
+    List<DummyEvent> events =
+        eventIds.stream().map(id -> new DummyEvent(id, waitInSeconds)).toList();
+
+    eventProducer.accept(events);
+    log.debug("Published {} event(s) to event producer", events.size());
+
+    log.info("Successfully triggered {} dummy event(s)", nbEvent);
+    return eventIds;
   }
 
   /**
@@ -88,26 +71,5 @@ public class HealthEventService {
 
     log.debug("Generated {} event ID(s)", eventIds.size());
     return eventIds;
-  }
-
-  /**
-   * Creates dummy events from the given event IDs and wait time.
-   *
-   * @param eventIds the list of event identifiers
-   * @param waitInSeconds the wait time for each event
-   * @return list of DummyEvent objects
-   */
-  private List<DummyEvent> createDummyEvents(List<String> eventIds, int waitInSeconds) {
-    return eventIds.stream().map(id -> new DummyEvent(id, waitInSeconds)).toList();
-  }
-
-  /**
-   * Publishes events through the event producer.
-   *
-   * @param events the list of events to publish
-   */
-  private void publishEvents(List<DummyEvent> events) {
-    eventProducer.accept(events);
-    log.debug("Published {} event(s) to event producer", events.size());
   }
 }

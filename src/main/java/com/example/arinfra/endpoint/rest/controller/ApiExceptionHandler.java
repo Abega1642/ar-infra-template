@@ -15,7 +15,6 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -127,7 +126,7 @@ public class ApiExceptionHandler {
     var errorResponse =
         ErrorResponse.of(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            ex.getMessage(),
+            "A storage operation failed",
             getRequestPath(request),
             ex.getErrorCode());
 
@@ -146,7 +145,7 @@ public class ApiExceptionHandler {
     var errorResponse =
         ErrorResponse.of(
             HttpStatus.BAD_REQUEST,
-            "Required part '" + ex.getRequestPartName() + "' is not present",
+            format("Required part '%s' is not present", ex.getRequestPartName()),
             getRequestPath(request),
             "MISSING_REQUIRED_PART");
 
@@ -159,7 +158,7 @@ public class ApiExceptionHandler {
 
     String message =
         ex.getConstraintViolations().stream()
-            .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+            .map(violation -> format("%s: %s", violation.getPropertyPath(), violation.getMessage()))
             .collect(Collectors.joining(", "));
 
     log.warn(
@@ -224,42 +223,6 @@ public class ApiExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
 
-  @ExceptionHandler(DataIntegrityViolationException.class)
-  public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
-      DataIntegrityViolationException ex, WebRequest request) {
-
-    String userMessage = "A conflict occurred with existing data";
-    String errorCode = "DATA_CONFLICT";
-
-    Throwable rootCause = ex.getRootCause();
-
-    if (rootCause != null) {
-      String errorMessage = rootCause.getMessage().toLowerCase();
-
-      if (errorMessage.contains("email")
-          && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
-        userMessage = "Email already exists";
-        errorCode = "DUPLICATE_EMAIL";
-      } else if (errorMessage.contains("clerk_id")
-          || errorMessage.contains("clerk")
-              && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
-        userMessage = "Clerk ID already exists";
-        errorCode = "DUPLICATE_CLERK_ID";
-      }
-    }
-
-    log.warn(
-        "Data integrity violation at path: {}, error code: {}, root cause: {}",
-        forJava(getRequestPath(request)),
-        forJava(errorCode),
-        forJava(rootCause != null ? rootCause.getMessage() : "unknown"));
-
-    var errorResponse =
-        ErrorResponse.of(HttpStatus.CONFLICT, userMessage, getRequestPath(request), errorCode);
-
-    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
-  }
-
   @ExceptionHandler(DirectoryUploadException.class)
   public ResponseEntity<ErrorResponse> handleDirectoryUploadException(
       DirectoryUploadException ex, WebRequest request) {
@@ -273,7 +236,7 @@ public class ApiExceptionHandler {
     var errorResponse =
         ErrorResponse.of(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            ex.getMessage(),
+            "The directory upload failed",
             getRequestPath(request),
             "DIRECTORY_UPLOAD_FAILED");
 

@@ -18,7 +18,7 @@ class HealthEmailControllerIT extends FacadeIT {
   @Test
   void should_send_email_with_successful_response() throws Exception {
     String email = "a.razafindratelo@gmail.com";
-    String expected = "All 5 test emails sent successfully to " + email;
+    String expected = "All 5 test emails sent successfully to %s".formatted(email);
 
     mvc.perform(get("/health/email").param("to", email))
         .andExpect(status().isOk())

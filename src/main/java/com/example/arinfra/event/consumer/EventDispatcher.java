@@ -88,9 +88,11 @@ public class EventDispatcher implements Consumer<InfraEvent>, ApplicationContext
   public void accept(InfraEvent event) {
     String eventSimpleName = event.getClass().getSimpleName();
     String serviceBeanName =
-        Character.toLowerCase(eventSimpleName.charAt(0))
-            + eventSimpleName.substring(1)
-            + EXPECTED_CONSUMER_NAME_SUFFIX;
+        String.format(
+            "%c%s%s",
+            Character.toLowerCase(eventSimpleName.charAt(0)),
+            eventSimpleName.substring(1),
+            EXPECTED_CONSUMER_NAME_SUFFIX);
 
     try {
       @SuppressWarnings("unchecked")

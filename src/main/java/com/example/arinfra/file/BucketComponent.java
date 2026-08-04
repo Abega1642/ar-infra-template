@@ -1,5 +1,6 @@
 package com.example.arinfra.file;
 
+import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
 import com.example.arinfra.InfraGenerated;
@@ -76,13 +77,13 @@ public class BucketComponent {
       return new FileHash("NONE", null);
     } catch (IOException e) {
       throw new BucketDirectoryUploadException(
-          "Failed to upload directory: " + forJava(directory.getAbsolutePath()), e);
+          format("Failed to upload directory: %s", forJava(directory.getAbsolutePath())), e);
     }
   }
 
   private void uploadDirectoryFile(File rootDir, Path path, String bucketKey) {
     String relativeKey =
-        bucketKey + "/" + rootDir.toPath().relativize(path).toString().replace("\\", "/");
+        format("%s/%s", bucketKey, rootDir.toPath().relativize(path).toString().replace("\\", "/"));
 
     uploadFile(path.toFile(), relativeKey);
   }
@@ -103,7 +104,7 @@ public class BucketComponent {
 
       return new FileHash("SHA-256", completed.response().checksumSHA256());
     } catch (Exception e) {
-      throw new BucketUploadException("Upload failed for key: " + forJava(bucketKey), e);
+      throw new BucketUploadException(format("Upload failed for key: %s", forJava(bucketKey)), e);
     }
   }
 
@@ -118,7 +119,7 @@ public class BucketComponent {
 
     try {
       File destination =
-          tempFileManager.createSecureTempFile("b2-", "-" + bucketKey.replace("/", "-"));
+          tempFileManager.createSecureTempFile("b2-", format("-%s", bucketKey.replace("/", "-")));
 
       var request =
           DownloadFileRequest.builder()
@@ -129,7 +130,8 @@ public class BucketComponent {
       bucketConf.getS3TransferManager().downloadFile(request).completionFuture().join();
       return destination;
     } catch (Exception e) {
-      throw new BucketDownloadException("Download failed for key: " + forJava(bucketKey), e);
+      throw new BucketDownloadException(
+          format("Download failed for key: %s", forJava(bucketKey)), e);
     }
   }
 
@@ -163,7 +165,7 @@ public class BucketComponent {
       bucketConf.getS3Client().deleteObject(request);
       log.debug("Successfully deleted object: key={}", forJava(bucketKey));
     } catch (Exception e) {
-      throw new BucketDeleteException("Delete failed for key: " + forJava(bucketKey), e);
+      throw new BucketDeleteException(format("Delete failed for key: %s", forJava(bucketKey)), e);
     }
   }
 

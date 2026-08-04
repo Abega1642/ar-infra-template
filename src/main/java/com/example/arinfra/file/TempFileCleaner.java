@@ -44,7 +44,8 @@ public class TempFileCleaner {
     }
 
     CleanupResult result = deleteFiles(files);
-    logCleanupSummary(result);
+    log.debug(
+        "Cleanup completed: {} succeeded, {} failed", result.successCount(), result.failureCount());
   }
 
   /**
@@ -122,16 +123,6 @@ public class TempFileCleaner {
           forJava(e.getMessage()));
       return false;
     }
-  }
-
-  /**
-   * Logs a summary of the cleanup operation.
-   *
-   * @param result the cleanup result containing success and failure counts
-   */
-  private void logCleanupSummary(CleanupResult result) {
-    log.debug(
-        "Cleanup completed: {} succeeded, {} failed", result.successCount(), result.failureCount());
   }
 
   /**

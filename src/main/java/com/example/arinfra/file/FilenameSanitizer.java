@@ -1,5 +1,6 @@
 package com.example.arinfra.file;
 
+import static java.lang.String.format;
 import static org.owasp.encoder.Encode.forJava;
 
 import java.nio.file.InvalidPathException;
@@ -72,7 +73,12 @@ public class FilenameSanitizer implements UnaryOperator<String> {
 
     if (isInvalidAfterSanitization(sanitized)) return handleInvalidResult();
 
-    logSanitization(originalFilename, sanitized);
+    if (!originalFilename.equals(sanitized))
+      log.debug(
+          "Filename sanitized: original={}, sanitized={}",
+          forJava(originalFilename),
+          forJava(sanitized));
+
     return sanitized;
   }
 
@@ -126,9 +132,9 @@ public class FilenameSanitizer implements UnaryOperator<String> {
             && withoutLeadingDots.length() <= 5
             && withoutLeadingDots.matches("^[a-z0-9]+$|^[A-Z0-9]+$");
 
-    if (isExtensionOnly) return UNDERSCORE + DOT + withoutLeadingDots;
+    if (isExtensionOnly) return format("%s%s%s", UNDERSCORE, DOT, withoutLeadingDots);
 
-    return UNDERSCORE + withoutLeadingDots;
+    return format("%s%s", UNDERSCORE, withoutLeadingDots);
   }
 
   /**
@@ -158,6 +164,7 @@ public class FilenameSanitizer implements UnaryOperator<String> {
     if (StringUtils.isNotEmpty(extension) && extension.length() <= MAX_EXTENSION_LENGTH) {
       String baseName = FilenameUtils.getBaseName(filename);
       int maxBaseLength = MAX_FILENAME_LENGTH - extension.length() - 1; // -1 for the dot
+
       return baseName.substring(0, Math.min(baseName.length(), maxBaseLength)) + DOT + extension;
     }
 
@@ -174,11 +181,5 @@ public class FilenameSanitizer implements UnaryOperator<String> {
   private String handleInvalidResult() {
     log.warn("Filename became invalid after sanitization, using default: {}", DEFAULT_FILENAME);
     return DEFAULT_FILENAME;
-  }
-
-  private void logSanitization(String original, String sanitized) {
-    if (!original.equals(sanitized))
-      log.debug(
-          "Filename sanitized: original={}, sanitized={}", forJava(original), forJava(sanitized));
   }
 }

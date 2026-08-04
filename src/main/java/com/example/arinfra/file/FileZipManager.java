@@ -379,7 +379,7 @@ public class FileZipManager {
 
         currentPath.append(pathParts[j]);
       }
-      String dirPath = currentPath + UNIX_PATH_SEPARATOR;
+      String dirPath = format("%s%s", currentPath, UNIX_PATH_SEPARATOR);
 
       if (addedDirectories.add(dirPath)) addDirectoryEntry(zos, dirPath);
     }
@@ -402,14 +402,16 @@ public class FileZipManager {
 
     return Stream.of(normalized.split("/"))
         .map(filenameSanitizer)
-        .reduce((a, b) -> a + "/" + b)
+        .reduce((a, b) -> format("%s/%s", a, b))
         .orElse(StringUtils.EMPTY);
   }
 
   private String ensureZipExtension(String fileName) {
-    if (StringUtils.isBlank(fileName)) return DEFAULT_ARCHIVE_NAME + ZIP_EXTENSION;
+    if (StringUtils.isBlank(fileName)) return format("%s%s", DEFAULT_ARCHIVE_NAME, ZIP_EXTENSION);
 
-    return fileName.toLowerCase().endsWith(ZIP_EXTENSION) ? fileName : fileName + ZIP_EXTENSION;
+    return fileName.toLowerCase().endsWith(ZIP_EXTENSION)
+        ? fileName
+        : format("%s%s", fileName, ZIP_EXTENSION);
   }
 
   /** Context holder for extraction state to reduce parameter passing. */

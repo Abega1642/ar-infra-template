@@ -54,7 +54,7 @@ public class HealthEmailController {
     } catch (AddressException e) {
       log.error("Invalid email address provided: {}", forJava(to), e);
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body("Invalid email address: " + forJava(to));
+          .body(format("Invalid email address: %s", forJava(to)));
 
     } catch (EmailHealthCheckException e) {
       log.error(
@@ -72,7 +72,7 @@ public class HealthEmailController {
     } catch (Exception e) {
       log.error("Unexpected error during email health check for: {}", forJava(to), e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Failed to send emails: " + forJava(e.getMessage()));
+          .body(format("Failed to send emails: %s", forJava(e.getMessage())));
     }
   }
 }

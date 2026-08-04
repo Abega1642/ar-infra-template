@@ -1,5 +1,6 @@
 package com.example.arinfra.service.health;
 
+import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static org.owasp.encoder.Encode.forJava;
 
@@ -92,7 +93,7 @@ public class HealthBucketService {
    */
   private void testDirectoryUpload() throws IOException {
     String dirId = randomUUID().toString();
-    String dirPrefix = DIR_PREFIX + dirId;
+    String dirPrefix = format("%s%s", DIR_PREFIX, dirId);
 
     File dir = tempFileManager.createSecureTempDirectory(dirPrefix);
     File fileInDir = null;
@@ -106,7 +107,7 @@ public class HealthBucketService {
       Files.move(fileInDir.toPath(), targetFile.toPath());
       fileInDir = targetFile;
 
-      String dirBucketKey = HEALTH_KEY + "/" + dirPrefix;
+      String dirBucketKey = format("%s/%s", HEALTH_KEY, dirPrefix);
       log.debug("Uploading test directory with key: {}", forJava(dirBucketKey));
 
       bucketComponent.upload(dir, dirBucketKey);
@@ -153,7 +154,7 @@ public class HealthBucketService {
    * @return the complete bucket key
    */
   private String buildBucketKey(String fileId) {
-    return HEALTH_KEY + "/" + fileId + FILE_SUFFIX;
+    return format("%s/%s%s", HEALTH_KEY, fileId, FILE_SUFFIX);
   }
 
   /**

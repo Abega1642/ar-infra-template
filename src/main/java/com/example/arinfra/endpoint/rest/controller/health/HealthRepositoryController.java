@@ -5,9 +5,9 @@ import com.example.arinfra.repository.model.Dummy;
 import com.example.arinfra.service.health.HealthRepositoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -29,14 +29,11 @@ public class HealthRepositoryController {
    * <p>This endpoint performs a read operation on the database to verify connectivity and query
    * execution. Pagination parameters are optional and will use default values if not provided.
    *
-   * @param page the page number to retrieve (optional)
-   * @param size the number of items per page (optional)
+   * @param page page, sze for pagination
    * @return a Page containing dummy data from the database
    */
   @GetMapping
-  public Page<Dummy> checkDbHealth(
-      @RequestParam(value = "page", required = false) Integer page,
-      @RequestParam(value = "size", required = false) Integer size) {
-    return healthRepositoryService.getAll(page, size);
+  public Page<Dummy> checkDbHealth(Pageable page) {
+    return healthRepositoryService.getAll(page);
   }
 }

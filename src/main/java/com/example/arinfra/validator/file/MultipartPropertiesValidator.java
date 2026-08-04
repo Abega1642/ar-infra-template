@@ -65,22 +65,26 @@ public class MultipartPropertiesValidator implements Validator<MultipartProperti
   private void validateMaxFileSize(DataSize maxFileSize) {
     if (maxFileSize == null || maxFileSize.compareTo(ZERO) <= 0)
       throw new SecurityException(
-          format(
-              "%s %s",
-              "Multipart max-file-size must be explicitly configured for security.",
-              "Set spring.servlet.multipart.max-file-size in application.yml"));
+          """
+          Multipart max-file-size must be explicitly configured for security. \
+          Set spring.servlet.multipart.max-file-size in application.yml
+          """);
 
     if (maxFileSize.compareTo(ABSOLUTE_MAX_SIZE) > 0)
       throw new SecurityException(
           format(
-              "Multipart max-file-size (%s) exceeds absolute maximum (%s). "
-                  + "This poses a serious DoS risk.",
+              """
+              Multipart max-file-size (%s) exceeds absolute maximum (%s). \
+              This poses a serious DoS risk.
+              """,
               maxFileSize, ABSOLUTE_MAX_SIZE));
 
     if (maxFileSize.compareTo(RECOMMENDED_MAX_SIZE) > 0)
       log.warn(
-          "Multipart max-file-size ({}) exceeds OWASP recommendation of {}. "
-              + "Ensure this is required for your use case.",
+          """
+              Multipart max-file-size ({}) exceeds OWASP recommendation of {}. \
+              Ensure this is required for your use case.
+          """,
           maxFileSize,
           RECOMMENDED_MAX_SIZE);
   }
@@ -88,22 +92,26 @@ public class MultipartPropertiesValidator implements Validator<MultipartProperti
   private void validateMaxRequestSize(DataSize maxRequestSize) {
     if (maxRequestSize == null || maxRequestSize.compareTo(ZERO) <= 0)
       throw new SecurityException(
-          format(
-              "%s %s",
-              "Multipart max-request-size must be explicitly configured for security.",
-              "Set spring.servlet.multipart.max-request-size in application.yml"));
+          """
+          Multipart max-request-size must be explicitly configured for security., \
+          Set spring.servlet.multipart.max-request-size in application.yml
+          """);
 
     if (maxRequestSize.compareTo(ABSOLUTE_MAX_SIZE) > 0)
       throw new SecurityException(
           format(
-              "Multipart max-request-size (%s) exceeds absolute maximum (%s). "
-                  + "This poses a serious DoS risk.",
+              """
+                  Multipart max-request-size (%s) exceeds absolute maximum (%s). \
+                  This poses a serious DoS risk.
+              """,
               maxRequestSize, ABSOLUTE_MAX_SIZE));
 
     if (maxRequestSize.compareTo(RECOMMENDED_MAX_SIZE) > 0)
       log.warn(
-          "Multipart max-request-size ({}) exceeds OWASP recommendation of {}. "
-              + "Ensure this is required for your use case.",
+          """
+              Multipart max-request-size ({}) exceeds OWASP recommendation of {}. \
+              Ensure this is required for your use case.
+          """,
           maxRequestSize,
           RECOMMENDED_MAX_SIZE);
   }

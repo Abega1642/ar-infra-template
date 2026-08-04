@@ -1,5 +1,6 @@
 package com.example.arinfra.mail;
 
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,7 +22,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 class MailerIT extends FacadeIT {
 
   @TempDir Path tempDir;
-  @Autowired private Mailer mailer;
+  @Autowired private Mailer subject;
   @Autowired private JavaMailSender mailSender;
   private InternetAddress testRecipient;
   private InternetAddress ccRecipient;
@@ -40,7 +41,7 @@ class MailerIT extends FacadeIT {
         new Email(
             testRecipient, List.of(), List.of(), "Test Subject", "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -54,7 +55,7 @@ class MailerIT extends FacadeIT {
             "<p>Test Body</p>",
             List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -68,7 +69,7 @@ class MailerIT extends FacadeIT {
             "<p>Test Body</p>",
             List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -82,7 +83,7 @@ class MailerIT extends FacadeIT {
             "<p>Test Body</p>",
             List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -90,7 +91,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, List.of(), List.of(), "Test without HTML", null, List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -98,7 +99,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, List.of(), List.of(), "Test with empty HTML", "", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -113,7 +114,7 @@ class MailerIT extends FacadeIT {
             "<p>See attachment</p>",
             List.of(attachment));
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
     assertTrue(attachment.exists(), "Attachment file should still exist after sending");
   }
 
@@ -132,7 +133,7 @@ class MailerIT extends FacadeIT {
             "<p>See attachments</p>",
             List.of(attachment1, attachment2, attachment3));
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -140,7 +141,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(null, List.of(), List.of(), "Test Subject", "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -148,7 +149,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, null, List.of(), "Test Subject", "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -156,7 +157,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, List.of(), null, "Test Subject", "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -164,7 +165,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, List.of(), List.of(), "Test Subject", "<p>Test Body</p>", null);
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -173,18 +174,20 @@ class MailerIT extends FacadeIT {
         new Email(
             testRecipient, List.of(), List.of(), "Test Subject", "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
   void should_send_email_with_long_subject() {
     String longSubject =
-        "This is a very long subject line that might cause issues if not handled properly by the"
-            + " email system and we want to make sure it works correctly";
+        """
+        This is a very long subject line that might cause issues if not handled properly by the \
+        email system and we want to make sure it works correctly\
+        """;
     var email =
         new Email(testRecipient, List.of(), List.of(), longSubject, "<p>Test Body</p>", List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -198,7 +201,7 @@ class MailerIT extends FacadeIT {
             "<p>Unicode test: こんにちは 你好 مرحبا</p>",
             List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -215,7 +218,7 @@ class MailerIT extends FacadeIT {
             "<p>Mixed attachments</p>",
             List.of(validAttachment, invalidAttachment));
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -245,7 +248,7 @@ class MailerIT extends FacadeIT {
     var email =
         new Email(testRecipient, List.of(), List.of(), "Complex HTML Test", complexHtml, List.of());
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -260,7 +263,7 @@ class MailerIT extends FacadeIT {
             "<p>Empty file attached</p>",
             List.of(emptyFile));
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   @Test
@@ -279,14 +282,14 @@ class MailerIT extends FacadeIT {
             "<p>Binary file attached</p>",
             List.of(binaryFile));
 
-    assertDoesNotThrow(() -> mailer.accept(email));
+    assertDoesNotThrow(() -> subject.accept(email));
   }
 
   private File createTestFile(String filename, String content) throws IOException {
     Path filePath = tempDir.resolve(filename);
     Files.writeString(filePath, content);
     File file = filePath.toFile();
-    assertTrue(file.exists(), "Test file should be created: " + filename);
+    assertTrue(file.exists(), format("Test file should be created: %s", filename));
     return file;
   }
 }

@@ -31,14 +31,13 @@ class HealthEventServiceIT {
 
   @Mock private EventProducer<DummyEvent> eventProducer;
 
-  @InjectMocks private HealthEventService healthEventService;
+  @InjectMocks private HealthEventService subject;
 
   @Captor private ArgumentCaptor<List<DummyEvent>> eventsCaptor;
 
   @Test
   void should_trigger_single_event_with_default_parameters() {
-    List<String> result =
-        healthEventService.triggerDummyEvents(DEFAULT_EVENT_COUNT, DEFAULT_WAIT_TIME);
+    List<String> result = subject.triggerDummyEvents(DEFAULT_EVENT_COUNT, DEFAULT_WAIT_TIME);
 
     assertNotNull(result);
     assertEquals(1, result.size());
@@ -49,7 +48,7 @@ class HealthEventServiceIT {
   void should_trigger_multiple_events_successfully() {
     int eventCount = 5;
 
-    List<String> result = healthEventService.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
+    List<String> result = subject.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
 
     assertEquals(eventCount, result.size());
     verify(eventProducer).accept(eventsCaptor.capture());
@@ -62,7 +61,7 @@ class HealthEventServiceIT {
   void should_generate_unique_event_ids() {
     int eventCount = 10;
 
-    List<String> result = healthEventService.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
+    List<String> result = subject.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
 
     long uniqueCount = result.stream().distinct().count();
     assertEquals(eventCount, uniqueCount);
@@ -72,7 +71,7 @@ class HealthEventServiceIT {
   void should_create_events_with_correct_wait_time() {
     int waitTime = 5;
 
-    healthEventService.triggerDummyEvents(3, waitTime);
+    subject.triggerDummyEvents(3, waitTime);
 
     verify(eventProducer).accept(eventsCaptor.capture());
     List<DummyEvent> capturedEvents = eventsCaptor.getValue();
@@ -83,7 +82,7 @@ class HealthEventServiceIT {
 
   @Test
   void should_trigger_maximum_allowed_events() {
-    List<String> result = healthEventService.triggerDummyEvents(MAX_EVENT_COUNT, DEFAULT_WAIT_TIME);
+    List<String> result = subject.triggerDummyEvents(MAX_EVENT_COUNT, DEFAULT_WAIT_TIME);
 
     assertEquals(MAX_EVENT_COUNT, result.size());
     verify(eventProducer).accept(eventsCaptor.capture());
@@ -92,7 +91,7 @@ class HealthEventServiceIT {
 
   @Test
   void should_trigger_minimum_allowed_events() {
-    List<String> result = healthEventService.triggerDummyEvents(MIN_EVENT_COUNT, DEFAULT_WAIT_TIME);
+    List<String> result = subject.triggerDummyEvents(MIN_EVENT_COUNT, DEFAULT_WAIT_TIME);
 
     assertEquals(MIN_EVENT_COUNT, result.size());
     verify(eventProducer).accept(anyList());
@@ -102,8 +101,7 @@ class HealthEventServiceIT {
   void should_throw_exception_when_event_count_is_zero() {
     IllegalArgumentException exception =
         assertThrows(
-            IllegalArgumentException.class,
-            () -> healthEventService.triggerDummyEvents(0, DEFAULT_WAIT_TIME));
+            IllegalArgumentException.class, () -> subject.triggerDummyEvents(0, DEFAULT_WAIT_TIME));
 
     assertTrue(exception.getMessage().contains("Event count must be between"));
     verify(eventProducer, never()).accept(anyList());
@@ -114,7 +112,7 @@ class HealthEventServiceIT {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> healthEventService.triggerDummyEvents(-1, DEFAULT_WAIT_TIME));
+            () -> subject.triggerDummyEvents(-1, DEFAULT_WAIT_TIME));
 
     assertTrue(exception.getMessage().contains("Event count must be between"));
     verify(eventProducer, never()).accept(anyList());
@@ -127,7 +125,7 @@ class HealthEventServiceIT {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> healthEventService.triggerDummyEvents(exceedingCount, DEFAULT_WAIT_TIME));
+            () -> subject.triggerDummyEvents(exceedingCount, DEFAULT_WAIT_TIME));
 
     assertTrue(exception.getMessage().contains("Event count must be between"));
     verify(eventProducer, never()).accept(anyList());
@@ -138,7 +136,7 @@ class HealthEventServiceIT {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> healthEventService.triggerDummyEvents(DEFAULT_EVENT_COUNT, -1));
+            () -> subject.triggerDummyEvents(DEFAULT_EVENT_COUNT, -1));
 
     assertTrue(exception.getMessage().contains("Wait time must be non-negative"));
     verify(eventProducer, never()).accept(anyList());
@@ -146,7 +144,7 @@ class HealthEventServiceIT {
 
   @Test
   void should_accept_zero_wait_time() {
-    List<String> result = healthEventService.triggerDummyEvents(DEFAULT_EVENT_COUNT, 0);
+    List<String> result = subject.triggerDummyEvents(DEFAULT_EVENT_COUNT, 0);
 
     assertNotNull(result);
     verify(eventProducer).accept(eventsCaptor.capture());
@@ -159,7 +157,7 @@ class HealthEventServiceIT {
   void should_map_event_ids_to_dummy_events_correctly() {
     int eventCount = 3;
 
-    List<String> eventIds = healthEventService.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
+    List<String> eventIds = subject.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
 
     verify(eventProducer).accept(eventsCaptor.capture());
     List<DummyEvent> capturedEvents = eventsCaptor.getValue();
@@ -173,7 +171,7 @@ class HealthEventServiceIT {
   void should_return_event_ids_in_same_order_as_created() {
     int eventCount = 5;
 
-    List<String> eventIds = healthEventService.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
+    List<String> eventIds = subject.triggerDummyEvents(eventCount, DEFAULT_WAIT_TIME);
 
     verify(eventProducer).accept(eventsCaptor.capture());
     List<DummyEvent> capturedEvents = eventsCaptor.getValue();
@@ -187,7 +185,7 @@ class HealthEventServiceIT {
   void should_handle_large_wait_time_values() {
     int largeWaitTime = Integer.MAX_VALUE;
 
-    List<String> result = healthEventService.triggerDummyEvents(DEFAULT_EVENT_COUNT, largeWaitTime);
+    List<String> result = subject.triggerDummyEvents(DEFAULT_EVENT_COUNT, largeWaitTime);
 
     assertNotNull(result);
     verify(eventProducer).accept(eventsCaptor.capture());

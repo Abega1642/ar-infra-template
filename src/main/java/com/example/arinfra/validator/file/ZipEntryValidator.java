@@ -168,8 +168,10 @@ public class ZipEntryValidator implements Validator<ZipEntry> {
     if (totalSize > MAX_DECOMPRESSED_SIZE)
       throw new SecurityException(
           format(
-              "Total decompressed size exceeds limit (limit: %d bytes, actual: %d bytes). Possible"
-                  + " zip bomb attack.",
+              """
+              Total decompressed size exceeds limit (limit: %d bytes, actual: %d bytes). Possible \
+              zip bomb attack.
+              """,
               MAX_DECOMPRESSED_SIZE, totalSize));
   }
 
@@ -296,8 +298,10 @@ public class ZipEntryValidator implements Validator<ZipEntry> {
     if (ratio > MAX_COMPRESSION_RATIO) {
       throw new SecurityException(
           format(
-              "ZIP entry has suspicious compression ratio (%d:1, limit: %d:1, declared: %d bytes,"
-                  + " compressed: %d bytes): %s. Possible zip bomb attack.",
+              """
+              ZIP entry has suspicious compression ratio (%d:1, limit: %d:1, declared: %d bytes, \
+              compressed: %d bytes): %s. Possible zip bomb attack.
+              """,
               ratio, MAX_COMPRESSION_RATIO, declaredSize, compressedSize, forJava(entryName)));
     }
   }
